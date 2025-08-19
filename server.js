@@ -40,7 +40,7 @@ app.post("/add-products", async (req, res) => {
       description: "brand new product here",
       price: 1234,
       category: "some category",
-      imageUrl: "img.png",
+      imageUrl: "img.png", 
       inStock: true,
     });
     res.json(newProduct);
