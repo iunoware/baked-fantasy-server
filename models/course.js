@@ -1,6 +1,6 @@
 // import express from "express";
-import mongoose from "mongoose";
 // import dotenv from "dotenv";
+import mongoose from "mongoose";
 
 const courseSchema = new mongoose.Schema({
   courseId: { type: Number, required: true, unique: true },
