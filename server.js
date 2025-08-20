@@ -12,10 +12,10 @@ import connectDB from "./db.js";
 // import Order from "./models/order.js";
 
 // for the routes
-// import authRoutes from "./routes/authRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 // import courseRoutes from "./routes/courseRoutes.js";
 // import orderRoutes from "./routes/orderRoutes.js";
-// import productRoutes from "./routes/productRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
 
 // other
 import { title } from "process";
@@ -29,10 +29,11 @@ app.use(express.json());
 connectDB();
 
 // for authentication
-// app.use("/", authRoutes);
+app.use("/", authRoutes);
 // app.use("/", courseRoutes);
 // app.use("/", orderRoutes);
-// app.use("/", productRoutes);
+app.use("/", productRoutes);
+app.use("/uploads", express.static("uploads"));
 
 // to POST a new course:
 // app.post("/add-course", async (req, res) => {
