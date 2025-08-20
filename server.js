@@ -1,4 +1,4 @@
-// // common imports
+// common imports
 // import mongoose from "mongoose";
 // import bodyParser from "body-parser";
 import express from "express";
@@ -12,7 +12,7 @@ import connectDB from "./db.js";
 // import Order from "./models/order.js";
 
 // for the routes
-// // import authRoutes from "./routes/authRoutes.js";
+// import authRoutes from "./routes/authRoutes.js";
 // import courseRoutes from "./routes/courseRoutes.js";
 // import orderRoutes from "./routes/orderRoutes.js";
 // import productRoutes from "./routes/productRoutes.js";
