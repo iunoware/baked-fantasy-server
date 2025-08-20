@@ -7,7 +7,6 @@ const productSchema = new mongoose.Schema({
   category: { type: String, required: true },
   imageUrl: { type: String },
   inStock: { type: Boolean, default: true },
-
   createdAt: { type: Date, default: Date.now },
 });
 
