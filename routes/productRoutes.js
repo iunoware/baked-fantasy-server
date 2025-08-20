@@ -1,5 +1,5 @@
-import router from "./authRoutes";
-import Product from "../models/products";
+import router from "./authRoutes.js";
+import Product from "../models/products.js";
 
 router.post("/add-products", async (req, res) => {
   try {
