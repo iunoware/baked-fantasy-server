@@ -34,14 +34,23 @@ const authMiddleware = async (req, res, next) => {
 
 router.post("/orders", authMiddleware, (req, res) => {
   try {
-    const { productId, quantity } = req.body;
+    const { productId, quantity, price, shippingAddress, billingAddress } = req.body;
 
     const newOrder = Order.create({
-        userId: req.user._id,
-        products: [{
-            product
-        }]
+      userId: req.user._id,
+      products: [
+        {
+          product: productId,
+          quantity,
+          price,
+        },
+      ],
+      totalPrice: quantity * price,
+      paymentStatus: "pending",
+      shippingAddress,
+      billingAddress,
     });
+    res.json(newOrder);
   } catch (error) {
     res.status(400).json("server error", error.message);
   }
