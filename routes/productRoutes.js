@@ -1,12 +1,32 @@
 import express from "express";
-import Product from "../models/products.js"; // your schema
+import multer from "multer";
+import Product from "../models/products.js";
 
 const router = express.Router();
 
-// Add new product (CREATE)
-router.post("/products", async (req, res) => {
+// Configure multer storage
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // Save in uploads folder
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname); // Unique filename
+  },
+});
+
+const upload = multer({ storage });
+
+// Add new product (CREATE with image upload)
+router.post("/products", upload.single("image"), async (req, res) => {
   try {
-    const product = await Product.create(req.body); // 👈 using create()
+    const product = await Product.create({
+      name: req.body.name,
+      description: req.body.description,
+      price: req.body.price,
+      category: req.body.category,
+      inStock: req.body.inStock,
+      imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
+    });
     res.status(201).json(product);
   } catch (error) {
     res.status(400).json({ error: error.message });
