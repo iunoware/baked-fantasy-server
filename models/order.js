@@ -4,7 +4,6 @@ import Product from "./products";
 
 const orderSchema = new mongoose.Schema(
   {
-    order_id: { type: String, required: true, unique: true },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: User,
