@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import User from "./user";
-import Product from "./products";
+import User from "./user.js";
+import Product from "./products.js";
 
 const orderSchema = new mongoose.Schema(
   {
@@ -11,7 +11,7 @@ const orderSchema = new mongoose.Schema(
     },
     products: [
       {
-        product: {
+        productId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: Product,
           required: true,
@@ -25,6 +25,11 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "paid", "failed"],
       default: "pending",
+    },
+    orderStatus: {
+      type: String,
+      enum: ["OK", "Canceled"],
+      default: "OK",
     },
     shippingAddress: { type: String, required: true },
     billingAddress: { type: String, required: true },
