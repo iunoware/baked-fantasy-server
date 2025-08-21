@@ -14,24 +14,25 @@ import connectDB from "./db.js";
 // for the routes
 import authRoutes from "./routes/authRoutes.js";
 // import courseRoutes from "./routes/courseRoutes.js";
-// import orderRoutes from "./routes/orderRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 
 // other
-import { title } from "process";
+// import { title } from "process";
 
 dotenv.config();
 const PORT = process.env.PORT || 5000;
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 connectDB();
 
 // for authentication
 app.use("/", authRoutes);
 // app.use("/", courseRoutes);
-// app.use("/", orderRoutes);
+app.use("/", orderRoutes);
 app.use("/", productRoutes);
 app.use("/uploads", express.static("uploads"));
 
