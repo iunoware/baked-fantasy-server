@@ -1,7 +1,6 @@
 import Order from "../models/order.js";
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
-import User from "../models/user.js";
 import express from "express";
 
 const router = express.Router();
@@ -12,13 +11,21 @@ const router = express.Router();
 // const res = await axios.post("/api/login", { email, password });
 // localStorage.setItem("token", res.data.token);
 
-// when clicking the buy now button
+// when clicking the buy now button, to get the product id from front-end
+// <button onClick={() => handleClick(product._id, product.price, quantity)} Buy now </button>
+//
 // axios.get("/api/orders", {
-//   Headers: {
-//     authorization: `Bearer ${localStorage.getItem("token")}`,
+//   products: [
+//     productId: product._id,
+//     quantity: quantity,
+//     price: product.price,
+//   ],
+//   headers: {
+//     Authorization: `Bearer ${localStorage.getItem("token")}`,
 //   },
 // });
 
+// middle ware or orders
 const authMiddleware = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -28,31 +35,35 @@ const authMiddleware = async (req, res, next) => {
     req.user = await User.findById(decoded.id);
     next();
   } catch (error) {
-    res.status(401).json("unauthorized", error.message);
+    res.status(401).json({ msg: "unauthorized", error: error.message });
   }
 };
 
-router.post("/orders", authMiddleware, (req, res) => {
+// stores the data in the DB
+router.post("/orders", authMiddleware, async (req, res) => {
   try {
-    const { productId, quantity, price, shippingAddress, billingAddress } = req.body;
+    const { products, shippingAddress, billingAddress } = req.body;
 
-    const newOrder = Order.create({
+    const { productId, quantity, price } = products;
+
+    const newOrder = await Order.create({
       userId: req.user._id,
       products: [
         {
-          product: productId,
+          productId,
           quantity,
           price,
         },
       ],
       totalPrice: quantity * price,
-      paymentStatus: "pending",
+      // paymentStatus: "pending",
+      // orderStatus: "ok",
       shippingAddress,
       billingAddress,
     });
-    res.json(newOrder);
+    res.json("success", newOrder);
   } catch (error) {
-    res.status(400).json("server error", error.message);
+    res.status(400).json(error.message);
   }
 });
 
