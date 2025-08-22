@@ -5,27 +5,54 @@ import express from "express";
 
 const router = express.Router();
 
+/* 
 // to store the token we need this code in frontend (in React)
 
 // for login
-// const res = await axios.post("/api/login", { email, password });
-// localStorage.setItem("token", res.data.token);
+const res = await axios.post("/login", { email, password });
+localStorage.setItem("token", res.data.token);
+
+
 
 // when clicking the buy now button, to get the product id from front-end
-// <button onClick={() => handleClick(product._id, product.price, quantity)} Buy now </button>
-//
-// axios.get("/api/orders", {
-//   products: [
-//     productId: product._id,
-//     quantity: quantity,
-//     price: product.price,
-//   ],
-//   headers: {
-//     Authorization: `Bearer ${localStorage.getItem("token")}`,
-//   },
-// });
+<button onClick={() => handleClick(product._id, product.price, quantity)}> Buy now </button>
 
-// middle ware or orders
+
+
+// for sending the order id when clicking the edit order
+<button onClick={() => handleClick(order._id)}> edit order </button>
+
+const handleEdit = async (orderId) => {
+  try {
+    const response = await axios.patch(`/orders/${orderId}`, {
+      orderStatus: "shipped",
+      shippingAddress: "New Address",
+      billingAddress: "New Billing Address",
+      paymentStatus: "paid"
+    });
+
+    console.log(response.data);
+  } catch (error) {
+    console.error("Error updating order:", error);
+  }
+};
+
+
+
+// to set the authorization
+axios.get("/orders", {
+  products: [
+    productId: product._id,
+    quantity: quantity,
+    price: product.price,
+  ],
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+  },
+});
+*/
+
+// middleware for orders
 const authMiddleware = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -39,31 +66,66 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-// stores the data in the DB
+// to POST an order
 router.post("/orders", authMiddleware, async (req, res) => {
   try {
-    const { products, shippingAddress, billingAddress } = req.body;
+    if (!req.body) return res.status(400).json({ msg: "req.body is missing!" });
 
-    const { productId, quantity, price } = products;
+    const { products = [], shippingAddress, billingAddress } = req.body;
+
+    if (!Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({ msg: "products cna't be an empty array!" });
+    }
+
+    const normalized = products.map((p) => ({
+      productId: p.productId,
+      quantity: p.quantity,
+      price: p.price,
+    }));
+
+    let totalPrice = normalized.reduce((sum, p) => sum + p.quantity * p.price, 0);
 
     const newOrder = await Order.create({
       userId: req.user._id,
-      products: [
-        {
-          productId,
-          quantity,
-          price,
-        },
-      ],
-      totalPrice: quantity * price,
-      // paymentStatus: "pending",
-      // orderStatus: "ok",
+      products: normalized,
+      totalPrice,
       shippingAddress,
       billingAddress,
     });
     res.json("success", newOrder);
   } catch (error) {
     res.status(400).json(error.message);
+  }
+});
+
+//to GET all orders
+router.get("/orders", async (req, res) => {
+  try {
+    const orders = await Order.find();
+    res.json(orders);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// to PATCH a an order
+router.patch("/orders/:id", async (req, res) => {
+  try {
+    const { orderStatus, shippingAddress, billingAddress, paymentStatus } = req.body;
+
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(400).json({ msg: "order not found" });
+
+    if (orderStatus) order.orderStatus = orderStatus;
+    if (shippingAddress) order.shippingAddress = shippingAddress;
+    if (billingAddress) order.billingAddress = billingAddress;
+    if (paymentStatus) order.paymentStatus = paymentStatus;
+
+    await order.save();
+
+    res.json({ msg: "order updated successfully" });
+  } catch (error) {
+    res.status(400).json({ msg: "something went wrong", error: error.message });
   }
 });
 
