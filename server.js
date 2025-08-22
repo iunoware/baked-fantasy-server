@@ -13,7 +13,7 @@ import connectDB from "./db.js";
 
 // for the routes
 import authRoutes from "./routes/authRoutes.js";
-// import courseRoutes from "./routes/courseRoutes.js";
+import courseRoutes from "./routes/courseRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 
@@ -31,7 +31,7 @@ connectDB();
 
 // for authentication
 app.use("/", authRoutes);
-// app.use("/", courseRoutes);
+app.use("/", courseRoutes);
 app.use("/", orderRoutes);
 app.use("/", productRoutes);
 app.use("/uploads", express.static("uploads"));
