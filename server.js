@@ -14,6 +14,7 @@ import connectDB from "./db.js";
 // for the routes
 import authRoutes from "./routes/authRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
+import courseVideoRoutes from "./routes/courseVideoRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 
@@ -32,43 +33,10 @@ connectDB();
 // for authentication
 app.use("/", authRoutes);
 app.use("/", courseRoutes);
+app.use("/", courseVideoRoutes);
 app.use("/", orderRoutes);
 app.use("/", productRoutes);
 app.use("/uploads", express.static("uploads"));
-
-// to POST a new course:
-// app.post("/add-course", async (req, res) => {
-//   try {
-//     const newCourse = await Course.create({
-//       courseId: 101,
-//       title: "backend",
-//       description: "test run",
-//       price: 123,
-//       thumbnail: "here goes the thumbnail",
-//       duration: "2h",
-//     });
-//     res.json(newCourse);
-//   } catch (error) {
-//     res.status(500).send(error.message);
-//   }
-// });
-
-// to POST a new product:
-// app.post("/add-products", async (req, res) => {
-//   try {
-//     const newProduct = await Product.create({
-//       name: "product-1",
-//       description: "brand new product here",
-//       price: 1234,
-//       category: "some category",
-//       imageUrl: "img.png",
-//       inStock: true,
-//     });
-//     res.json(newProduct);
-//   } catch (error) {
-//     res.status(500).send(error.message);
-//   }
-// });
 
 app.listen(PORT, () => {
   console.log(`server is running at ${PORT}`);
