@@ -6,7 +6,7 @@ const courseSchema = new mongoose.Schema({
   price: { type: Number, required: true },
   thumbnail: { type: String, required: true },
   duration: { type: String, required: true },
-  videosUrl: [{ type: String }],
+  videoUrl: [{ type: String }],
   createdAt: { type: Date, default: Date.now },
 });
 
