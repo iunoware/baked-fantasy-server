@@ -9,6 +9,7 @@ const courseVideoSchema = new mongoose.Schema({
   duration: { type: String, required: true },
   category: { type: mongoose.Schema.Types.ObjectId, ref: Course, required: true },
   serialNum: { type: Number, required: true, unique: true },
+  description: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 
