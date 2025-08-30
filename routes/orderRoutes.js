@@ -102,7 +102,19 @@ router.post("/orders", authMiddleware, async (req, res) => {
 router.get("/orders", async (req, res) => {
   try {
     const orders = await Order.find();
-    res.json(orders);
+    if (!orders) return res.status(400).json({ msg: "can't find orders" });
+    res.json({ length: orders.length, orders });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+//to GET specific order
+router.get("/orders/:id", async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(400).json({ msg: "can't find the specific order" });
+    res.json(order);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
