@@ -3,6 +3,7 @@ import multer from "multer";
 import Product from "../models/products.js";
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
+import Category from "../models/category.js";
 
 const router = express.Router();
 
@@ -51,10 +52,10 @@ router.post(
   async (req, res) => {
     try {
       const product = await Product.create({
-        name: req.body.name,
-        description: req.body.description,
+        title: req.body.title,
+        subject: req.body.subject,
         price: req.body.price,
-        category: req.body.category,
+        category: Category._id,
         inStock: req.body.inStock,
         imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
       });
@@ -83,6 +84,16 @@ router.get("/products/:id", verifyAdmin, async (req, res) => {
     res.json(product);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+// Get products by category
+router.get("/products/category/:categoryName", async (req, res) => {
+  try {
+    const { categoryName } = req.params;
+    const products = await Product.find({ category: categoryName });
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
