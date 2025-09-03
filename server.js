@@ -17,6 +17,7 @@ import authRoutes from "./routes/authRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import courseVideoRoutes from "./routes/courseVideoRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import productCategoryRoutes from "./routes/productCategoryRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 
 // other
@@ -37,7 +38,8 @@ app.use("/", authRoutes);
 app.use("/", courseRoutes);
 app.use("/", courseVideoRoutes);
 app.use("/", orderRoutes);
-app.use("/api", productRoutes);
+app.use("/", productCategoryRoutes);
+app.use("/", productRoutes);
 app.use("/uploads", express.static("uploads"));
 
 app.listen(PORT, () => {
