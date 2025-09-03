@@ -4,6 +4,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import connectDB from "./db.js";
+import cors from "cors";
 
 // for the models
 // import Course from "./models/course.js";
@@ -25,6 +26,7 @@ dotenv.config();
 const PORT = process.env.PORT || 5000;
 
 const app = express();
+app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -35,7 +37,7 @@ app.use("/", authRoutes);
 app.use("/", courseRoutes);
 app.use("/", courseVideoRoutes);
 app.use("/", orderRoutes);
-app.use("/", productRoutes);
+app.use("/api", productRoutes);
 app.use("/uploads", express.static("uploads"));
 
 app.listen(PORT, () => {
