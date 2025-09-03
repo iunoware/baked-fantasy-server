@@ -44,24 +44,29 @@ async function verifyAdmin(req, res, next) {
 }
 
 // Add new product (CREATE with image upload)
-router.post("/products", verifyAdmin, upload.single("image"), async (req, res) => {
-  try {
-    const product = await Product.create({
-      name: req.body.name,
-      description: req.body.description,
-      price: req.body.price,
-      category: req.body.category,
-      inStock: req.body.inStock,
-      imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
-    });
-    res.status(201).json(product);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+router.post(
+  "/products",
+  verifyAdmin,
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const product = await Product.create({
+        name: req.body.name,
+        description: req.body.description,
+        price: req.body.price,
+        category: req.body.category,
+        inStock: req.body.inStock,
+        imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
+      });
+      res.status(201).json(product);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
   }
-});
+);
 
 // Get all products (READ)
-router.get("/products", verifyAdmin, async (req, res) => {
+router.get("/products", async (req, res) => {
   try {
     const products = await Product.find();
     res.json(products);
