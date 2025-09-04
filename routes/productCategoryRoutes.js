@@ -32,6 +32,7 @@ async function verifyAdmin(req, res, next) {
       return res.status(403).json({ msg: "access denied" });
     }
     res.user = user;
+    v;
     next();
   } catch (error) {
     res.status(400).json({ msg: "something went wrong", error: error.message });
