@@ -51,14 +51,22 @@ router.post(
   upload.single("image"),
   async (req, res) => {
     try {
+      // Step 1: Find category by name
+      const category = await Category.findOne({ title: req.body.category });
+      if (!category) {
+        return res.status(404).json({ error: "Category not found" });
+      }
+
+      // Step 2: Create product with category _id
       const product = await Product.create({
         title: req.body.title,
         subject: req.body.subject,
         price: req.body.price,
-        category: Category._id,
+        category: category._id,
         inStock: req.body.inStock,
         imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
       });
+
       res.status(201).json(product);
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -86,11 +94,24 @@ router.get("/products/:id", verifyAdmin, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-// Get products by category
+
+// Get products by category name
 router.get("/products/category/:categoryName", async (req, res) => {
   try {
     const { categoryName } = req.params;
-    const products = await Product.find({ category: categoryName });
+
+    // Step 1: find the category
+    const category = await Category.findOne({ title: categoryName });
+    if (!category) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
+    // Step 2: find products with this category _id
+    const products = await Product.find({ category: category._id }).populate(
+      "category",
+      "title subject"
+    );
+
     res.json(products);
   } catch (err) {
     res.status(500).json({ error: err.message });
