@@ -17,22 +17,16 @@ const storage = multer.diskStorage({
   },
 });
 
+// accept multiple images
 const upload = multer({ storage });
 
-// for admin verification:
 async function verifyAdmin(req, res, next) {
   try {
     const token = req.headers.authorization?.split(" ")[1]?.trim();
-    // console.log("Authorization header:", req.headers.authorization);
-    // console.log("Token extracted:", token);
-
     if (!token) return res.status(401).json({ msg: "No token provided" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // console.log("decoded ID:", decoded.id);
-
     const user = await User.findById(decoded.id);
-    // console.log(user);
 
     if (!user || user.role !== "admin") {
       return res.status(403).json({ msg: "access denied" });
@@ -44,27 +38,32 @@ async function verifyAdmin(req, res, next) {
   }
 }
 
-// Add new product (CREATE with image upload)
+// CREATE product with category name + multiple images
 router.post(
   "/products",
   verifyAdmin,
-  upload.single("image"),
+  upload.array("images", 4),
   async (req, res) => {
     try {
-      // Step 1: Find category by name
+      // Find category by name
       const category = await Category.findOne({ title: req.body.category });
       if (!category) {
         return res.status(404).json({ error: "Category not found" });
       }
 
-      // Step 2: Create product with category _id
+      // Build image URLs
+      const imageUrls = req.files
+        ? req.files.map((file) => `/uploads/${file.filename}`)
+        : [];
+
       const product = await Product.create({
         title: req.body.title,
         subject: req.body.subject,
+        description: req.body.description,
         price: req.body.price,
         category: category._id,
         inStock: req.body.inStock,
-        imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
+        images: imageUrls,
       });
 
       res.status(201).json(product);
@@ -74,20 +73,23 @@ router.post(
   }
 );
 
-// Get all products (READ)
+// GET all products
 router.get("/products", async (req, res) => {
   try {
-    const products = await Product.find();
+    const products = await Product.find().populate("category", "title");
     res.json(products);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get single product by ID (READ)
-router.get("/products/:id", verifyAdmin, async (req, res) => {
+// GET single product by ID
+router.get("/products/:id", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).populate(
+      "category",
+      "title"
+    );
     if (!product) return res.status(404).json({ error: "Product not found" });
     res.json(product);
   } catch (error) {
@@ -95,30 +97,27 @@ router.get("/products/:id", verifyAdmin, async (req, res) => {
   }
 });
 
-// Get products by category name
+// GET products by category name
 router.get("/products/category/:categoryName", async (req, res) => {
   try {
     const { categoryName } = req.params;
 
-    // Step 1: find the category
     const category = await Category.findOne({ title: categoryName });
     if (!category) {
       return res.status(404).json({ error: "Category not found" });
     }
 
-    // Step 2: find products with this category _id
     const products = await Product.find({ category: category._id }).populate(
       "category",
-      "title subject"
+      "title"
     );
-
     res.json(products);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Update product by ID (UPDATE)
+// UPDATE product
 router.put("/products/:id", verifyAdmin, async (req, res) => {
   try {
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
@@ -132,7 +131,7 @@ router.put("/products/:id", verifyAdmin, async (req, res) => {
   }
 });
 
-// Delete product by ID (DELETE)
+// DELETE product
 router.delete("/products/:id", verifyAdmin, async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);

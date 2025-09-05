@@ -2,12 +2,11 @@ import express from "express";
 import multer from "multer";
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
-import Category from "../models/category.js"; // ✅ import category model
-import Product from "../models/products.js"; // keep this for products
+import Category from "../models/category.js";
 
 const router = express.Router();
 
-// Configure multer storage
+// Multer config (single image)
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/");
@@ -31,7 +30,8 @@ async function verifyAdmin(req, res, next) {
     if (!user || user.role !== "admin") {
       return res.status(403).json({ msg: "access denied" });
     }
-    res.user = user;
+
+    req.user = user; // ✅ attach user to req (not res)
     next();
   } catch (error) {
     res.status(400).json({ msg: "something went wrong", error: error.message });
@@ -40,17 +40,17 @@ async function verifyAdmin(req, res, next) {
 
 // ---------------- CATEGORY ROUTES ----------------
 
-// Create category
+// Create category (with 1 image)
 router.post(
   "/categories",
   verifyAdmin,
-  upload.single("image"),
+  upload.single("image"), // 👈 expects form-data key: image
   async (req, res) => {
     try {
       const category = await Category.create({
         title: req.body.title,
-        subject: req.body.subject,
-        imageUrl: req.file ? `/uploads/${req.file.filename}` : null,
+        subject: req.body.subject || null,
+        image: req.file ? `/uploads/${req.file.filename}` : null, // ✅ fixed field name
       });
       res.status(201).json(category);
     } catch (error) {
@@ -69,7 +69,7 @@ router.get("/categories", async (req, res) => {
   }
 });
 
-// Get single category
+// Get single category by name
 router.get("/categories/name/:title", async (req, res) => {
   try {
     const category = await Category.findOne({ title: req.params.title });
@@ -104,4 +104,5 @@ router.delete("/categories/:id", verifyAdmin, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 export default router;
