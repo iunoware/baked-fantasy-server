@@ -45,14 +45,34 @@ async function verifyAdmin(req, res, next) {
 // to POST a new course:
 router.post("/course", verifyAdmin, upload.single("image"), async (req, res) => {
   try {
-    const { title, description, price, duration } = req.body;
+    const {
+      rating,
+      reviews,
+      students,
+      title,
+      subtitle,
+      description,
+      duration,
+      totalHours,
+      totalVideos,
+      price,
+      originalPrice,
+    } = req.body;
 
     const newCourse = await Course.create({
+      ImageUrl: req.file ? `/uploads/${req.file.filename}` : "No thumbnail provided",
+      rating,
+      reviews,
+      students,
       title,
+      subtitle,
       description,
-      price,
-      thumbnail: req.file ? `/uploads/${req.file.filename}` : "No thumbnail provided",
       duration,
+      totalHours,
+      totalVideos,
+      highlights: req.body.highlights ? JSON.parse(req.body.highlights) : [],
+      price,
+      originalPrice,
     });
     res.json({ msg: "course created successfully", newCourse });
   } catch (error) {
@@ -64,7 +84,7 @@ router.post("/course", verifyAdmin, upload.single("image"), async (req, res) => 
 router.get("/course", verifyAdmin, async (req, res) => {
   try {
     const courses = await Course.find();
-    res.json(courses);
+    res.json({length: courses.length, courses});
   } catch (error) {
     res.status(400).json({ msg: "can't fetch courses", error: error.message });
   }
@@ -87,18 +107,23 @@ router.get("/course/:id", verifyAdmin, async (req, res) => {
 // to PATCH courses:
 router.patch("/course/:id", verifyAdmin, upload.single("image"), async (req, res) => {
   try {
-    const { title, description, price, duration } = req.body;
+    // const { title, description, price, duration } = req.body;
 
-    const course = await Course.findById(req.params.id);
+    // const course = await Course.findById(req.params.id);
+
+    // if (title) course.title = title;
+    // if (description) course.description = description;
+    // if (price) course.price = price;
+    // if (req.file) course.thumbnail = `/uploads/${req.file.filename}`;
+    // if (duration) course.duration = duration;
+
+    // await course.save();
+
+    const course = await course.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
     if (!course) return res.status(400).json({ msg: "course not found" });
-
-    if (title) course.title = title;
-    if (description) course.description = description;
-    if (price) course.price = price;
-    if (req.file) course.thumbnail = `/uploads/${req.file.filename}`;
-    if (duration) course.duration = duration;
-
-    await course.save();
 
     res.json({ msg: "course updated successfully" });
   } catch (error) {
