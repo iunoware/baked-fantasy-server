@@ -5,6 +5,11 @@ import express from "express";
 import dotenv from "dotenv";
 import connectDB from "./db.js";
 import cors from "cors";
+// import path from "path";
+// import { fileURLToPath } from "url";
+
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
 
 // for the models
 // import Course from "./models/course.js";
@@ -32,6 +37,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 connectDB();
+
+// app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // for authentication
 app.use("/", authRoutes);
