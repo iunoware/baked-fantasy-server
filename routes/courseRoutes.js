@@ -84,7 +84,7 @@ router.post("/course", verifyAdmin, upload.single("image"), async (req, res) => 
 router.get("/course", verifyAdmin, async (req, res) => {
   try {
     const courses = await Course.find();
-    res.json({length: courses.length, courses});
+    res.json({ length: courses.length, courses });
   } catch (error) {
     res.status(400).json({ msg: "can't fetch courses", error: error.message });
   }
@@ -119,7 +119,7 @@ router.patch("/course/:id", verifyAdmin, upload.single("image"), async (req, res
 
     // await course.save();
 
-    const course = await course.findByIdAndUpdate(req.params.id, req.body, {
+    const course = await Course.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     });
