@@ -50,7 +50,7 @@ router.post(
       const category = await Category.create({
         title: req.body.title,
         subject: req.body.subject || null,
-        image: req.file ? `/uploads/${req.file.filename}` : null, // ✅ fixed field name
+        imageUrl: req.file ? `/uploads/${req.file.filename}` : null, // ✅ fixed field name
       });
       res.status(201).json(category);
     } catch (error) {
