@@ -81,7 +81,7 @@ router.post("/course", verifyAdmin, upload.single("image"), async (req, res) => 
 });
 
 // to GET all courses:
-router.get("/course", verifyAdmin, async (req, res) => {
+router.get("/course", async (req, res) => {
   try {
     const courses = await Course.find();
     res.json({ length: courses.length, courses });
