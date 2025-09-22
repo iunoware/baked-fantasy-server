@@ -59,6 +59,7 @@ router.post(
       const product = await Product.create({
         title: req.body.title,
         subject: req.body.subject,
+        info: req.body.info,
         description: req.body.description,
         price: req.body.price,
         category: category._id,
@@ -94,6 +95,30 @@ router.get("/products/:id", async (req, res) => {
     res.json(product);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Get related products
+router.get("/products/:id/related", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id).populate(
+      "category",
+      "title"
+    );
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const related = await Product.find({
+      category: product.category._id, // same category
+      _id: { $ne: product._id }, // exclude the current product
+    })
+      .limit(3)
+      .populate("category", "title");
+
+    res.json(related);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
