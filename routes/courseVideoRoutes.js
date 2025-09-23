@@ -53,7 +53,7 @@ async function verifyAdmin(req, res, next) {
 
 // POST
 router.post(
-  "/course/:id/video",
+  "/course/online-course/:courseId",
   verifyAdmin,
   upload.fields([
     { name: "video", maxCount: 1 },
@@ -72,7 +72,7 @@ router.post(
         duration,
         serialNum,
         description,
-        category: req.params.id,
+        category: req.params.courseId,
         thumbnail: req.files?.image?.[0]
           ? `/uploads/${req.files.image[0].filename}`
           : "No thumbnail provided",
@@ -89,32 +89,34 @@ router.post(
 );
 
 // GET
-router.get("/course/:id/video", verifyAdmin, async (req, res) => {
+router.get("/course/online-course/:courseId", async (req, res) => {
   try {
-    const allCourseVideos = await CourseVideo.find();
-    if (!allCourseVideos)
+    const allCourseVideos = await CourseVideo.find({ category: req.params.courseId });
+    if (!allCourseVideos || allCourseVideos === 0) {
       return res.status(400).json({ msg: "Can't find course videos" });
+    }
 
-    res.json({ total_videos: allCourseVideos.length, allCourseVideos });
+    res.json({ total_videos: allCourseVideos.length, videos: allCourseVideos });
   } catch (error) {
     res.status(400).json({ msg: "something went wrong", error: error.message });
   }
 });
 
 // GET single video
-router.get("/course/:courseId/video/:videoId", verifyAdmin, async (req, res) => {
-  try {
-    const { courseId, videoId } = req.params;
-    const currentVideo = await CourseVideo.findById(videoId);
-    if (!currentVideo) return res.status(400).json({ msg: "video not found" });
+// router.get("/course/:courseId/video/:videoId", async (req, res) => {
+//   try {
+//     const { courseId, videoId } = req.params;
+//     const currentVideo = await CourseVideo.findById(videoId);
+//     if (!currentVideo) return res.status(400).json({ msg: "video not found" });
 
-    res.json(currentVideo);
-  } catch (error) {
-    res.status(400).json({ msg: "something went wrong", error: error.message });
-  }
-});
+//     res.json(currentVideo);
+//   } catch (error) {
+//     res.status(400).json({ msg: "something went wrong", error: error.message });
+//   }
+// });
 
 // PATCH
+
 router.patch(
   "/course/:courseId/video/:videoId",
   verifyAdmin,
