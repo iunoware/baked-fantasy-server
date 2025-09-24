@@ -91,7 +91,7 @@ router.get("/course", async (req, res) => {
 });
 
 // GET single course:
-router.get("/course/:id", verifyAdmin, async (req, res) => {
+router.get("/course/:id", async (req, res) => {
   try {
     const currentCourse = await Course.findById(req.params.id);
     if (!currentCourse) {
