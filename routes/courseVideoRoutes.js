@@ -61,7 +61,7 @@ router.post(
   ]),
   async (req, res) => {
     try {
-      const { title, duration, serialNum, description } = req.body;
+      const { title, duration, serialNum, description, section } = req.body;
 
       if (!title || !duration || !serialNum || !description) {
         return res.status(400).json({ msg: "details are missing" });
@@ -72,6 +72,7 @@ router.post(
         duration,
         serialNum,
         description,
+        section,
         category: req.params.courseId,
         thumbnail: req.files?.image?.[0]
           ? `/uploads/${req.files.image[0].filename}`
