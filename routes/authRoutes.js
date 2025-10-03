@@ -9,7 +9,7 @@ const router = express.Router();
 // for user registration
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, purchasedCourses } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ msg: "User already exists" });
@@ -20,6 +20,7 @@ router.post("/register", async (req, res) => {
       name,
       email,
       password: hashedPassword,
+      purchasedCourses,
     });
 
     res.json({ msg: "User registered successfully", user });
@@ -39,13 +40,9 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
 
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1d",
-      }
-    );
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
 
     res.json({ msg: "Login success", token, user });
   } catch (err) {
