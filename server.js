@@ -33,7 +33,13 @@ dotenv.config();
 const PORT = process.env.PORT || 5000;
 
 const app = express();
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -50,6 +56,11 @@ app.use("/", productCategoryRoutes);
 app.use("/", productRoutes);
 app.use("/", userVerification);
 app.use("/uploads", express.static("uploads"));
+
+app.use((err, req, res, next) => {
+  console.error("Server Error:", err);
+  res.status(500).json({ message: "Internal server error" });
+});
 
 app.listen(PORT, () => {
   console.log(`server is running at ${PORT}`);
