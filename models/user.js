@@ -4,6 +4,7 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String },
+  mobileNumber: { type: Number, required: true },
   purchasedCourses: [
     {
       courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
