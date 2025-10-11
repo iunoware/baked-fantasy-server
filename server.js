@@ -24,7 +24,8 @@ import courseVideoRoutes from "./routes/courseVideoRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import productCategoryRoutes from "./routes/productCategoryRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
-import userVerification from "./routes/userVerification.js";
+import myLearning from "./routes/myLearning.js";
+// import userVerification from "./routes/userVerification.js";
 
 // other
 // import { title } from "process";
@@ -54,7 +55,8 @@ app.use("/", courseVideoRoutes);
 app.use("/", orderRoutes);
 app.use("/", productCategoryRoutes);
 app.use("/", productRoutes);
-app.use("/", userVerification);
+app.use("/", myLearning);
+// app.use("/", userVerification);
 app.use("/uploads", express.static("uploads"));
 
 app.use((err, req, res, next) => {
