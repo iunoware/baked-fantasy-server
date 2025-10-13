@@ -19,7 +19,11 @@ async function userVerification(req, res, next) {
 
 router.get("/courses/my-learning", userVerification, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate("purchasedCourses");
+    // const user = await User.findById(req.user.id).populate("purchasedCourses");
+    const user = await User.findById(req.user.id).populate({
+      path: "purchasedCourses.courseId", // ✅ populate inside nested object
+      model: "Course",
+    });
     res.json({ courses: user.purchasedCourses });
   } catch (error) {
     res.json({ error: error.message });

@@ -61,7 +61,37 @@ app.use("/", productRoutes);
 app.use("/", essentialsRoutes);
 app.use("/", myLearning);
 // app.use("/", userVerification);
-app.use("/uploads", express.static("uploads"));
+// app.use("/uploads", express.static("uploads"));
+
+async function verifyUser(req, res, next) {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ msg: "Unauthorized" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (!user) return res.status(403).json({ msg: "User not found" });
+
+    req.user = user;
+    next();
+  } catch (error) {
+    res.status(400).json({ msg: "Invalid token", error: error.message });
+  }
+}
+
+app.use("/uploads/:filename", verifyUser, (req, res) => {
+  const fileName = req.params.filename;
+  const options = {
+    root: path.join(process.cwd(), "uploads"),
+  };
+  res.sendFile(fileName, options, (err) => {
+    if (err) {
+      console.error(err);
+      res.status(404).send("File not found");
+    }
+  });
+});
 
 app.use((err, req, res, next) => {
   console.error("Server Error:", err);
