@@ -44,7 +44,7 @@ router.post("/google-login", async (req, res) => {
 // for user registration
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, purchasedCourses } = req.body;
+    const { name, email, password, mobileNumber, purchasedCourses } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ msg: "User already exists" });

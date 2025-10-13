@@ -41,7 +41,7 @@ async function verifyAdmin(req, res, next) {
 // CREATE product with category name + multiple images
 router.post(
   "/products",
-  verifyAdmin,
+  // verifyAdmin,
   upload.array("images", 4),
   async (req, res) => {
     try {

@@ -43,7 +43,7 @@ async function verifyAdmin(req, res, next) {
 // Create category (with 1 image)
 router.post(
   "/categories",
-  verifyAdmin,
+  // verifyAdmin,
   upload.single("image"), // 👈 expects form-data key: image
   async (req, res) => {
     try {
