@@ -63,6 +63,7 @@ app.use("/", myLearning);
 // app.use("/", userVerification);
 // app.use("/uploads", express.static("uploads"));
 
+// NEW CODE
 async function verifyUser(req, res, next) {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -80,7 +81,7 @@ async function verifyUser(req, res, next) {
   }
 }
 
-app.use("/uploads/:filename", verifyUser, (req, res) => {
+app.get("/uploads/:filename", verifyUser, (req, res) => {
   const fileName = req.params.filename;
   const options = {
     root: path.join(process.cwd(), "uploads"),
@@ -92,6 +93,8 @@ app.use("/uploads/:filename", verifyUser, (req, res) => {
     }
   });
 });
+// NEW CODE
+// CURRENTLY NEED TO WORK ON THIS
 
 app.use((err, req, res, next) => {
   console.error("Server Error:", err);
