@@ -86,7 +86,7 @@ router.get("/ess-categories/name/:title", async (req, res) => {
 // Update category
 router.put("/ess-categories/:id", verifyAdmin, async (req, res) => {
   try {
-    const essCategory = await EssentialCategory.findByIdAndUpdate(
+    const essCategory = await EssCategory.findByIdAndUpdate(
       req.params.id,
       req.body,
       {

@@ -51,7 +51,67 @@ async function verifyAdmin(req, res, next) {
   }
 }
 
+// async function verifyUser(req, res, next) {
+//   try {
+//     const token = req.headers.authorization?.split(" ")[1];
+//     if (!token) return res.status(401).json({ msg: "Unauthorized" });
+
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     const user = await User.findById(decoded.id);
+//     // const user = await User.findById(decoded.id).populate({
+//     //   path: "purchasedCourses.courseId",
+//     //   model: "Course",
+//     // });
+//     if (!user) return res.status(403).json({ msg: "User not found" });
+
+//     // const courseId = req.params.courseId;
+//     // const hasPurchased = user.purchasedCourses.some(
+//     //   (course) => course._id.toString() === courseId
+//     // );
+
+//     // if (!hasPurchased) {
+//     //   return res.status(400).json({ msg: "You have not purchased this course" });
+//     // }
+
+//     req.user = user;
+//     next();
+//   } catch (error) {
+//     res.status(400).json({ msg: "Invalid token", error: error.message });
+//   }
+// }
+
+// async function verifyUser(req, res, next) {
+//   try {
+//     const token = req.headers.authorization?.split(" ")[1];
+//     if (!token) return res.status(401).json({ msg: "Unauthorized" });
+
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+//     // Find user from decoded token
+//     const user = await User.findById(decoded.id).populate({
+//       path: "purchasedCourses", // populate the array of course IDs
+//       model: "Course",
+//     });
+//     if (!user) return res.status(403).json({ msg: "User not found" });
+
+//     const courseId = req.params.courseId;
+//     const hasPurchased = user.purchasedCourses.some(
+//       (course) => course._id.toString() === courseId
+//     );
+
+//     if (!hasPurchased) {
+//       return res.status(403).json({ msg: "You have not purchased this course" });
+//     }
+
+//     req.user = user;
+//     next();
+//   } catch (error) {
+//     res.status(400).json({ msg: "Invalid token", error: error.message });
+//   }
+// }
+
 // POST
+
 router.post(
   "/course/online-course/:courseId",
   verifyAdmin,
