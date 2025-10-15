@@ -3,7 +3,7 @@ import multer from "multer";
 import Essentials from "../models/essentials.js";
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
-import Category from "../models/category.js";
+import EssentialCategory from "../models/essentialCategory.js";
 
 const router = express.Router();
 
@@ -46,7 +46,9 @@ router.post(
   async (req, res) => {
     try {
       // Find category by name
-      const category = await Category.findOne({ title: req.body.category });
+      const category = await EssentialCategory.findOne({
+        title: req.body.category,
+      });
       if (!category) {
         return res.status(404).json({ error: "Category not found" });
       }
@@ -127,7 +129,7 @@ router.get("/essentials/category/:categoryName", async (req, res) => {
   try {
     const { categoryName } = req.params;
 
-    const category = await Category.findOne({ title: categoryName });
+    const category = await EssentialCategory.findOne({ title: categoryName });
     if (!category) {
       return res.status(404).json({ error: "Category not found" });
     }

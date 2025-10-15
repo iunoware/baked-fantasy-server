@@ -2,7 +2,7 @@ import express from "express";
 import multer from "multer";
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
-import EssCategory from "../models/essentialCategory.js";
+import EssentialCategory from "../models/essentialCategory.js";
 
 const router = express.Router();
 
@@ -47,7 +47,7 @@ router.post(
   upload.single("image"), // 👈 expects form-data key: image
   async (req, res) => {
     try {
-      const essCategory = await EssCategory.create({
+      const essCategory = await EssentialCategory.create({
         title: req.body.title,
         subject: req.body.subject || null,
         imageUrl: req.file ? `/uploads/${req.file.filename}` : null, // ✅ fixed field name
@@ -62,7 +62,7 @@ router.post(
 // Get all categories
 router.get("/ess-categories", async (req, res) => {
   try {
-    const essCategories = await EssCategory.find();
+    const essCategories = await EssentialCategory.find();
     res.json(essCategories);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -72,7 +72,7 @@ router.get("/ess-categories", async (req, res) => {
 // Get single category by name
 router.get("/ess-categories/name/:title", async (req, res) => {
   try {
-    const essCategories = await EssCategory.findOne({
+    const essCategories = await EssentialCategory.findOne({
       title: req.params.title,
     });
     if (!essCategories)
@@ -86,7 +86,7 @@ router.get("/ess-categories/name/:title", async (req, res) => {
 // Update category
 router.put("/ess-categories/:id", verifyAdmin, async (req, res) => {
   try {
-    const essCategory = await EssCategory.findByIdAndUpdate(
+    const essCategory = await EssentialCategory.findByIdAndUpdate(
       req.params.id,
       req.body,
       {
@@ -105,7 +105,9 @@ router.put("/ess-categories/:id", verifyAdmin, async (req, res) => {
 // Delete category
 router.delete("/ess-categories/:id", verifyAdmin, async (req, res) => {
   try {
-    const essCategory = await EssCategory.findByIdAndDelete(req.params.id);
+    const essCategory = await EssentialCategory.findByIdAndDelete(
+      req.params.id
+    );
     if (!essCategory)
       return res.status(404).json({ error: "Category not found" });
     res.json({ msg: "Category deleted" });
