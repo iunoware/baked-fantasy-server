@@ -5,7 +5,9 @@ import express from "express";
 import dotenv from "dotenv";
 import connectDB from "./db.js";
 import cors from "cors";
-// import path from "path";
+import jwt from "jsonwebtoken";
+import User from "./models/user.js";
+import path from "path";
 // import { fileURLToPath } from "url";
 
 // const __filename = fileURLToPath(import.meta.url);
@@ -27,6 +29,7 @@ import essentialCategoryRoutes from "./routes/essentialCategoryRoute.js";
 import productRoutes from "./routes/productRoutes.js";
 import essentialsRoutes from "./routes/essentialsRoutes.js";
 import myLearning from "./routes/myLearning.js";
+// import cart from "./routes/cartRoutes.js";
 // import userVerification from "./routes/userVerification.js";
 
 // other
@@ -60,8 +63,9 @@ app.use("/", essentialCategoryRoutes);
 app.use("/", productRoutes);
 app.use("/", essentialsRoutes);
 app.use("/", myLearning);
-// app.use("/", userVerification);
+// app.use("/", cart);
 // app.use("/uploads", express.static("uploads"));
+// app.use("/", userVerification);
 
 // NEW CODE
 async function verifyUser(req, res, next) {
@@ -81,7 +85,7 @@ async function verifyUser(req, res, next) {
   }
 }
 
-app.get("/uploads/:filename", verifyUser, (req, res) => {
+app.get("/uploads/:fileName", verifyUser, (req, res) => {
   const fileName = req.params.filename;
   const options = {
     root: path.join(process.cwd(), "uploads"),
