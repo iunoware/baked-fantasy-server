@@ -1,8 +1,7 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import Cart from "../models/cart.js";
-import User from "../models/user.js"; // make sure this exists
-import Product from "../models/product.js"; // optional if you want to populate
+import User from "../models/user.js";
 
 const router = express.Router();
 
@@ -60,7 +59,7 @@ router.post("/cart", async (req, res) => {
   }
 });
 
-// ✅ Get a user's cart
+// Get a user's cart
 router.get("/cart/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
@@ -72,7 +71,7 @@ router.get("/cart/:userId", async (req, res) => {
   }
 });
 
-// ✅ Update quantity of a product in cart
+// Update quantity of a product in cart
 router.put("/cart", async (req, res) => {
   try {
     const { userId, productId, quantity } = req.body;
@@ -95,7 +94,7 @@ router.put("/cart", async (req, res) => {
   }
 });
 
-// ✅ Remove a product from cart
+// Remove a product from cart
 router.delete("/cart", async (req, res) => {
   try {
     const { userId, productId } = req.body;

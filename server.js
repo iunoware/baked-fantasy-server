@@ -28,7 +28,7 @@ import productCategoryRoutes from "./routes/productCategoryRoutes.js";
 import essentialCategoryRoutes from "./routes/essentialCategoryRoute.js";
 import productRoutes from "./routes/productRoutes.js";
 import essentialsRoutes from "./routes/essentialsRoutes.js";
-import myLearning from "./routes/myLearning.js
+import myLearning from "./routes/myLearning.js";
 import cart from "./routes/cartRoutes.js";
 
 // import cart from "./routes/cartRoutes.js";
@@ -66,16 +66,12 @@ app.use("/", essentialCategoryRoutes);
 app.use("/", productRoutes);
 app.use("/", essentialsRoutes);
 app.use("/", myLearning);
-
 app.use("/", cart);
 // app.use("/", userVerification);
-
-// app.use("/", cart);
 
 // app.use("/uploads", express.static("uploads"));
 // app.use("/", userVerification);
 
-// NEW CODE
 async function verifyUser(req, res, next) {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -105,8 +101,6 @@ app.get("/uploads/:fileName", verifyUser, (req, res) => {
     }
   });
 });
-// NEW CODE
-// CURRENTLY NEED TO WORK ON THIS
 
 app.use((err, req, res, next) => {
   console.error("Server Error:", err);
