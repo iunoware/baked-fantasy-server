@@ -1,7 +1,8 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import Cart from "../models/cart.js";
-import User from "../models/user.js";
+import User from "../models/user.js"; // make sure this exists
+
 
 const router = express.Router();
 
@@ -40,9 +41,7 @@ router.post("/cart", async (req, res) => {
     let cart = await Cart.findOne({ userId });
 
     if (cart) {
-      const itemIndex = cart.items.findIndex(
-        (i) => i.productId.toString() === productId
-      );
+      const itemIndex = cart.items.findIndex((i) => i.productId.toString() === productId);
       if (itemIndex > -1) {
         cart.items[itemIndex].quantity += quantity;
       } else {
@@ -79,9 +78,7 @@ router.put("/cart", async (req, res) => {
 
     if (!cart) return res.status(404).json({ msg: "Cart not found" });
 
-    const itemIndex = cart.items.findIndex(
-      (i) => i.productId.toString() === productId
-    );
+    const itemIndex = cart.items.findIndex((i) => i.productId.toString() === productId);
     if (itemIndex > -1) {
       cart.items[itemIndex].quantity = quantity;
       await cart.save();
