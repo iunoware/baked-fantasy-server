@@ -71,7 +71,7 @@ app.use("/", myLearning);
 app.use("/", cart);
 // app.use("/", userVerification);
 
-// app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static("uploads"));
 // app.use("/", userVerification);
 
 async function verifyUser(req, res, next) {
@@ -146,7 +146,6 @@ app.use("/uploads", express.static("uploads"));
 // });
 // NEW CODE
 // CURRENTLY NEED TO WORK ON THIS
-
 
 app.use((err, req, res, next) => {
   console.error("Server Error:", err);
