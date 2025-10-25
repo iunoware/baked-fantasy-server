@@ -69,7 +69,7 @@ app.use("/", myLearning);
 app.use("/", cart);
 // app.use("/", userVerification);
 
-// app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static("uploads"));
 // app.use("/", userVerification);
 
 async function verifyUser(req, res, next) {
