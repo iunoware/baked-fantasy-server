@@ -62,8 +62,16 @@ router.post("/cart", async (req, res) => {
 router.get("/cart/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    const cart = await Cart.findOne({ userId }).populate("items.productId");
+    let cart = await Cart.findOne({ userId }).populate("items.productId");
+
     if (!cart) return res.status(404).json({ msg: "Cart not found" });
+
+    // 🧹 Remove invalid items (product deleted or not populated)
+    cart.items = cart.items.filter((item) => item.productId !== null);
+
+    // Optionally save if you want to permanently clean the DB
+    await cart.save();
+
     res.json(cart);
   } catch (error) {
     res.status(500).json({ msg: error.message });
