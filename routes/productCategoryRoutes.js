@@ -43,7 +43,7 @@ async function verifyAdmin(req, res, next) {
 // Create category (with 1 image)
 router.post(
   "/categories",
-  // verifyAdmin,
+  verifyAdmin,
   upload.single("image"), // 👈 expects form-data key: image
   async (req, res) => {
     try {
@@ -71,8 +71,10 @@ router.get("/categories", async (req, res) => {
 
 // Get single category by name
 router.get("/categories/name/:title", async (req, res) => {
+  // router.get("/categories/:id", async (req, res) => {
   try {
     const category = await Category.findOne({ title: req.params.title });
+    // const category = await Category.findById(req.params.id);
     if (!category) return res.status(404).json({ error: "Category not found" });
     res.json(category);
   } catch (error) {
@@ -81,9 +83,16 @@ router.get("/categories/name/:title", async (req, res) => {
 });
 
 // Update category
-router.put("/categories/:id", verifyAdmin, async (req, res) => {
+router.patch("/categories/:id", verifyAdmin, upload.single("image"), async (req, res) => {
   try {
-    const category = await Category.findByIdAndUpdate(req.params.id, req.body, {
+    const updateData = { ...req.body };
+
+    if (req.file) {
+      // updateData.image = req.file.filename;
+      updateData.imageUrl = `/uploads/${req.file.filename}`;
+    }
+
+    const category = await Category.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
     });
