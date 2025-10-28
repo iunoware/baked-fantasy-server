@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
     {
       courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
       purchasedAt: { type: Date, default: Date.now },
+      // price: { type: String, ref: "Course" },
     },
   ],
 
