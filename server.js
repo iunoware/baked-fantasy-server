@@ -31,6 +31,7 @@ import essentialsRoutes from "./routes/essentialsRoutes.js";
 import myLearning from "./routes/myLearning.js";
 import cart from "./routes/cartRoutes.js";
 import offlineCourseRoute from "./routes/offlineCourseRoute.js";
+import bannerRoute from "./routes/bannerRoute.js";
 
 // import cart from "./routes/cartRoutes.js";
 
@@ -46,7 +47,7 @@ const app = express();
 app.use(
   cors({
     origin: "http://localhost:5173",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
   })
 );
@@ -67,6 +68,7 @@ app.use("/", essentialCategoryRoutes);
 app.use("/", productRoutes);
 app.use("/", essentialsRoutes);
 app.use("/", myLearning);
+app.use("/", bannerRoute);
 
 app.use("/", cart);
 // app.use("/", userVerification);
