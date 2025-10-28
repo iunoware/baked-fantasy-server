@@ -43,10 +43,40 @@ router.post("/banner", upload.single("image"), async (req, res) => {
       title: req.body.title,
       subject: req.body.subject,
       image: req.file ? `/uploads/${req.file.filename}` : null, // ✅ fixed field name
+      active: req.body.active,
+      endDate: req.body.endDate,
     });
     res.status(201).json(banner);
   } catch (error) {
     res.status(404).json({ error: error.message });
+  }
+});
+// edit the Banner
+router.patch("/banner", upload.single("image"), async (req, res) => {
+  try {
+    const { title, subject, active } = req.body;
+
+    const updateData = {
+      title,
+      subject,
+      active,
+      endDate: active ? new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) : null,
+    };
+    if (req.file) {
+      updateData.image = `/uploads/${req.file.filename}`;
+    }
+    const updatedData = await Banner.findOneAndUpdate({}, updateData, {
+      new: true,
+      upsert: true,
+    });
+
+    res.status(200).json({
+      message: "Banner Updated Successfully",
+      banner: updatedData,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to update banner" });
   }
 });
 
@@ -59,13 +89,28 @@ router.get("/banner", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// get active banner
+router.get("/banner/active", async (req, res) => {
+  try {
+    const today = new Date();
+    const banner = await Banner.findOne({
+      active: true,
+      endDate: { $gte: today },
+    });
+    // console.log(banner);
+    res.json(banner);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // get single Banner
 router.get("/banner/:id", async (req, res) => {
   try {
     const banner = await Banner.findById(req.params.id);
     if (!banner) return res.status(404).json({ error: "Banner not found" });
-    res.json(product);
+    // console.log(banner);
+    res.json(banner);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
