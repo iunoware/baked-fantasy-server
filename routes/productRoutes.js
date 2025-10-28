@@ -88,10 +88,7 @@ router.get("/products", async (req, res) => {
 // GET single product by ID
 router.get("/products/:id", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate(
-      "category",
-      "title"
-    );
+    const product = await Product.findById(req.params.id).populate("category", "title");
     if (!product) return res.status(404).json({ error: "Product not found" });
     res.json(product);
   } catch (error) {
@@ -102,10 +99,7 @@ router.get("/products/:id", async (req, res) => {
 // Get related products
 router.get("/products/:id/related", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate(
-      "category",
-      "title"
-    );
+    const product = await Product.findById(req.params.id).populate("category", "title");
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
