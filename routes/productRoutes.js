@@ -39,41 +39,43 @@ async function verifyAdmin(req, res, next) {
 }
 
 // CREATE product with category name + multiple images
-router.post(
-  "/products",
-  // verifyAdmin,
-  upload.array("images", 4),
-  async (req, res) => {
-    try {
-      // Find category by name
-      const category = await Category.findOne({ title: req.body.category });
-      if (!category) {
-        return res.status(404).json({ error: "Category not found" });
-      }
+router.post("/products", verifyAdmin, upload.array("images", 4), async (req, res) => {
+  try {
+    let { category } = req.body;
 
-      // Build image URLs
-      const imageUrls = req.files
-        ? req.files.map((file) => `/uploads/${file.filename}`)
-        : [];
-
-      const product = await Product.create({
-        title: req.body.title,
-        subject: req.body.subject,
-        info: req.body.info,
-        description: req.body.description,
-        originalPrice: req.body.originalPrice,
-        discountedPrice: req.body.discountedPrice,
-        category: category._id,
-        inStock: req.body.inStock,
-        images: imageUrls,
-      });
-
-      res.status(201).json(product);
-    } catch (error) {
-      res.status(400).json({ error: error.message });
+    // Find category by name
+    if (!category) {
+      // return res.status(404).json({ error: "Category not found" });
+      return res.json([]);
     }
+
+    const categoryBack = await Category.findOne({ title: category });
+    if (!categoryBack) {
+      return res.status(404).json({ error: "category not found" });
+    }
+
+    // Build image URLs
+    const imageUrls = req.files
+      ? req.files.map((file) => `/uploads/${file.filename}`)
+      : [];
+
+    const product = await Product.create({
+      title: req.body.title,
+      subject: req.body.subject,
+      info: req.body.info,
+      description: req.body.description,
+      originalPrice: req.body.originalPrice,
+      discountedPrice: req.body.discountedPrice,
+      category: categoryBack._id,
+      inStock: req.body.inStock,
+      images: imageUrls,
+    });
+
+    res.status(201).json(product);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
-);
+});
 
 // GET all products
 router.get("/products", async (req, res) => {
@@ -124,7 +126,8 @@ router.get("/products/category/:categoryName", async (req, res) => {
 
     const category = await Category.findOne({ title: categoryName });
     if (!category) {
-      return res.status(404).json({ error: "Category not found" });
+      // return res.status(404).json({ error: "No products found in this category" });
+      return res.json([]);
     }
 
     const products = await Product.find({ category: category._id }).populate(
