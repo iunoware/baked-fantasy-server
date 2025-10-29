@@ -67,7 +67,7 @@ router.post("/products", verifyAdmin, upload.array("images", 4), async (req, res
       originalPrice: req.body.originalPrice,
       discountedPrice: req.body.discountedPrice,
       category: categoryBack._id,
-      inStock: req.body.inStock,
+      isActive: req.body.inStock,
       images: imageUrls,
     });
 
@@ -141,7 +141,7 @@ router.get("/products/category/:categoryName", async (req, res) => {
 });
 
 // UPDATE product
-router.put("/products/:id", verifyAdmin, async (req, res) => {
+router.patch("/products/:id", async (req, res) => {
   try {
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
