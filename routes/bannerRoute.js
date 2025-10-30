@@ -51,6 +51,7 @@ router.post("/banner", upload.single("image"), async (req, res) => {
     res.status(404).json({ error: error.message });
   }
 });
+
 // edit the Banner
 router.patch("/banner", upload.single("image"), async (req, res) => {
   try {

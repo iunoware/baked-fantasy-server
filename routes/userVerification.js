@@ -1,6 +1,6 @@
-// // import express from "express";
+//  import express from "express";
 // import User from "../models/user.js";
-// // import jwt, { verify } from "jsonwebtoken";
+// import jwt, { verify } from "jsonwebtoken";
 // import router from "./authRoutes.js";
 
 // async function verifyUser(req, res, next) {
