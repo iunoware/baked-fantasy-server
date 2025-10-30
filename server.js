@@ -32,6 +32,7 @@ import myLearning from "./routes/myLearning.js";
 import cart from "./routes/cartRoutes.js";
 import offlineCourseRoute from "./routes/offlineCourseRoute.js";
 import bannerRoute from "./routes/bannerRoute.js";
+import adminRoute from "./routes/adminRoute.js";
 
 // import cart from "./routes/cartRoutes.js";
 
@@ -69,6 +70,7 @@ app.use("/", productRoutes);
 app.use("/", essentialsRoutes);
 app.use("/", myLearning);
 app.use("/", bannerRoute);
+app.use("/", adminRoute);
 
 app.use("/", cart);
 // app.use("/", userVerification);
