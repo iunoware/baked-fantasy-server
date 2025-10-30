@@ -14,7 +14,7 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
     images: [{ type: String }], // store multiple images
-    inStock: { type: Boolean, default: true },
+    isActive: { type: Boolean, default: true },
     createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }

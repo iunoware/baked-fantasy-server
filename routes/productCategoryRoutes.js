@@ -69,6 +69,17 @@ router.get("/categories", async (req, res) => {
   }
 });
 
+// get single category new
+router.get("/categories/:id", async (req, res) => {
+  try {
+    const category = await Category.findById(req.params.id);
+    if (!category) return res.status(404).json({ error: "Category not found" });
+    res.json(category);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get single category by name
 router.get("/categories/name/:title", async (req, res) => {
   // router.get("/categories/:id", async (req, res) => {
