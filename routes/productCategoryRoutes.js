@@ -19,31 +19,30 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Admin verification
-async function verifyAdmin(req, res, next) {
-  try {
-    const token = req.headers.authorization?.split(" ")[1]?.trim();
-    if (!token) return res.status(401).json({ msg: "No token provided" });
+// async function verifyAdmin(req, res, next) {
+//   try {
+//     const token = req.headers.authorization?.split(" ")[1]?.trim();
+//     if (!token) return res.status(401).json({ msg: "No token provided" });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     const user = await User.findById(decoded.id);
 
-    if (!user || user.role !== "admin") {
-      return res.status(403).json({ msg: "access denied" });
-    }
+//     if (!user || user.role !== "admin") {
+//       return res.status(403).json({ msg: "access denied" });
+//     }
 
-    req.user = user; // ✅ attach user to req (not res)
-    next();
-  } catch (error) {
-    res.status(400).json({ msg: "something went wrong", error: error.message });
-  }
-}
+//     req.user = user; // ✅ attach user to req (not res)
+//     next();
+//   } catch (error) {
+//     res.status(400).json({ msg: "something went wrong", error: error.message });
+//   }
+// }
 
 // ---------------- CATEGORY ROUTES ----------------
 
 // Create category (with 1 image)
 router.post(
   "/categories",
-  verifyAdmin,
   upload.single("image"), // 👈 expects form-data key: image
   async (req, res) => {
     try {
@@ -94,7 +93,7 @@ router.get("/categories/name/:title", async (req, res) => {
 });
 
 // Update category
-router.patch("/categories/:id", verifyAdmin, upload.single("image"), async (req, res) => {
+router.patch("/categories/:id", upload.single("image"), async (req, res) => {
   try {
     const updateData = { ...req.body };
 
@@ -115,7 +114,7 @@ router.patch("/categories/:id", verifyAdmin, upload.single("image"), async (req,
 });
 
 // Delete category
-router.delete("/categories/:id", verifyAdmin, async (req, res) => {
+router.delete("/categories/:id", async (req, res) => {
   try {
     const category = await Category.findByIdAndDelete(req.params.id);
     if (!category) return res.status(404).json({ error: "Category not found" });

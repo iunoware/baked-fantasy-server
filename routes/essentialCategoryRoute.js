@@ -19,24 +19,24 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Admin verification
-async function verifyAdmin(req, res, next) {
-  try {
-    const token = req.headers.authorization?.split(" ")[1]?.trim();
-    if (!token) return res.status(401).json({ msg: "No token provided" });
+// async function verifyAdmin(req, res, next) {
+//   try {
+//     const token = req.headers.authorization?.split(" ")[1]?.trim();
+//     if (!token) return res.status(401).json({ msg: "No token provided" });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     const user = await User.findById(decoded.id);
 
-    if (!user || user.role !== "admin") {
-      return res.status(403).json({ msg: "access denied" });
-    }
+//     if (!user || user.role !== "admin") {
+//       return res.status(403).json({ msg: "access denied" });
+//     }
 
-    req.user = user; // ✅ attach user to req (not res)
-    next();
-  } catch (error) {
-    res.status(400).json({ msg: "something went wrong", error: error.message });
-  }
-}
+//     req.user = user; // ✅ attach user to req (not res)
+//     next();
+//   } catch (error) {
+//     res.status(400).json({ msg: "something went wrong", error: error.message });
+//   }
+// }
 
 // ---------------- CATEGORY ROUTES ----------------
 
@@ -75,8 +75,7 @@ router.get("/ess-categories/name/:title", async (req, res) => {
     const essCategories = await EssentialCategory.findOne({
       title: req.params.title,
     });
-    if (!essCategories)
-      return res.status(404).json({ error: "Category not found" });
+    if (!essCategories) return res.status(404).json({ error: "Category not found" });
     res.json(essCategories);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -84,18 +83,13 @@ router.get("/ess-categories/name/:title", async (req, res) => {
 });
 
 // Update category
-router.put("/ess-categories/:id", verifyAdmin, async (req, res) => {
+router.put("/ess-categories/:id", async (req, res) => {
   try {
-    const essCategory = await EssCategory.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
-    if (!essCategory)
-      return res.status(404).json({ error: "Category not found" });
+    const essCategory = await EssCategory.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!essCategory) return res.status(404).json({ error: "Category not found" });
     res.json(essCategory);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -103,13 +97,10 @@ router.put("/ess-categories/:id", verifyAdmin, async (req, res) => {
 });
 
 // Delete category
-router.delete("/ess-categories/:id", verifyAdmin, async (req, res) => {
+router.delete("/ess-categories/:id", async (req, res) => {
   try {
-    const essCategory = await EssentialCategory.findByIdAndDelete(
-      req.params.id
-    );
-    if (!essCategory)
-      return res.status(404).json({ error: "Category not found" });
+    const essCategory = await EssentialCategory.findByIdAndDelete(req.params.id);
+    if (!essCategory) return res.status(404).json({ error: "Category not found" });
     res.json({ msg: "Category deleted" });
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -20,26 +20,27 @@ const storage = multer.diskStorage({
 // accept multiple images
 const upload = multer({ storage });
 
-async function verifyAdmin(req, res, next) {
-  try {
-    const token = req.headers.authorization?.split(" ")[1]?.trim();
-    if (!token) return res.status(401).json({ msg: "No token provided" });
+// async function verifyAdmin(req, res, next) {
+//   try {
+//     const token = req.headers.authorization?.split(" ")[1]?.trim();
+//     if (!token) return res.status(401).json({ msg: "No token provided" });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     const user = await User.findById(decoded.id);
 
-    if (!user || user.role !== "admin") {
-      return res.status(403).json({ msg: "access denied" });
-    }
-    res.user = user;
-    next();
-  } catch (error) {
-    res.status(400).json({ msg: "something went wrong", error: error.message });
-  }
-}
+//     if (!user || user.role !== "admin") {
+//       return res.status(403).json({ msg: "access denied" });
+//     }
+//     res.user = user;
+//     next();
+//   } catch (error) {
+//     res.status(400).json({ msg: "something went wrong", error: error.message });
+//   }
+// }
 
 // CREATE product with category name + multiple images
-router.post("/products", verifyAdmin, upload.array("images", 4), async (req, res) => {
+
+router.post("/products", upload.array("images", 4), async (req, res) => {
   try {
     let { category } = req.body;
 
@@ -141,21 +142,29 @@ router.get("/products/category/:categoryName", async (req, res) => {
 });
 
 // UPDATE product
-router.patch("/products/:id", async (req, res) => {
+router.patch("/products/:id", upload.array("images", 4), async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+    const updateData = { ...req.body };
+
+    // If files exist, handle them
+    if (req.files && req.files.length > 0) {
+      updateData.images = req.files.map((file) => `/uploads/${file.filename}`);
+    }
+
+    const product = await Product.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
     });
     if (!product) return res.status(404).json({ error: "Product not found" });
     res.json(product);
   } catch (error) {
+    console.error("PATCH /products/:id error:", error);
     res.status(400).json({ error: error.message });
   }
 });
 
 // DELETE product
-router.delete("/products/:id", verifyAdmin, async (req, res) => {
+router.delete("/products/:id", async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) return res.status(404).json({ error: "Product not found" });
