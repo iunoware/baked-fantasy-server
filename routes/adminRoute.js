@@ -54,43 +54,45 @@ router.post("/admin/check", async (req, res) => {
   }
 });
 
-// POST: Create new admin (only by master admin)
+// POST: Create a new admin by master admin
 router.post("/admin/newUser", async (req, res) => {
   try {
-    const { masterName, masterPass, name, password } = req.body;
+    const { name, password, confirmPass, masterName, masterPassword } =
+      req.body;
 
-    // 1️⃣ Check required fields
-    if (!masterName || !masterPass || !name || !password) {
-      return res.status(400).json({ msg: "All fields are required" });
+    // 1️⃣ Check all fields
+    if (!name || !password || !confirmPass || !masterName || !masterPassword) {
+      return res.status(400).json({ msg: "All fields required" });
     }
 
-    // 2️⃣ Find master admin
-    const masterAdmin = await Admin.findOne({ name: masterName });
-    if (!masterAdmin || !masterAdmin.isMaster) {
-      return res.status(403).json({ msg: "You are not authorized" });
+    // 2️⃣ Confirm password match
+    if (password !== confirmPass) {
+      return res.status(400).json({ msg: "Passwords do not match" });
     }
 
-    // 3️⃣ Verify master admin password
-    const isMasterMatch = await bcrypt.compare(
-      masterPass,
-      masterAdmin.password
-    );
-    if (!isMasterMatch) {
-      return res.status(401).json({ msg: "Master password incorrect" });
+    // 3️⃣ Verify master admin
+    const master = await Admin.findOne({ name: masterName, isMaster: true });
+    if (!master) {
+      return res.status(404).json({ msg: "Master admin not found" });
     }
 
-    // 4️⃣ Check if new admin already exists
+    const isMatch = await bcrypt.compare(masterPassword, master.password);
+    if (!isMatch) {
+      return res.status(401).json({ msg: "Invalid master password" });
+    }
+
+    // 4️⃣ Check duplicate admin
     const userExists = await Admin.findOne({ name });
     if (userExists) {
       return res.status(400).json({ msg: "Admin already exists" });
     }
 
-    // 5️⃣ Create new admin
+    // 5️⃣ Hash new admin password
     const hashedPassword = await bcrypt.hash(password, 10);
     const newAdmin = await Admin.create({
       name,
       password: hashedPassword,
-      isMaster: false, // normal admin
+      isMaster: false,
     });
 
     res.status(201).json({ msg: "New admin created successfully", newAdmin });
