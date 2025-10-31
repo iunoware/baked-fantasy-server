@@ -27,29 +27,29 @@ await axios.post( `http://localhost:5000/course/${courseId}/video/${videoId}`);
 */
 
 // for admin verification:
-async function verifyAdmin(req, res, next) {
-  try {
-    const token = req.headers.authorization?.split(" ")[1]?.trim();
-    // console.log("Authorization header:", req.headers.authorization);
-    // console.log("Token extracted:", token);
+// async function verifyAdmin(req, res, next) {
+//   try {
+//     const token = req.headers.authorization?.split(" ")[1]?.trim();
+//     // console.log("Authorization header:", req.headers.authorization);
+//     // console.log("Token extracted:", token);
 
-    if (!token) return res.status(401).json({ msg: "No token provided" });
+//     if (!token) return res.status(401).json({ msg: "No token provided" });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // console.log("decoded ID:", decoded.id);
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     // console.log("decoded ID:", decoded.id);
 
-    const user = await User.findById(decoded.id);
-    // console.log(user);
+//     const user = await User.findById(decoded.id);
+//     // console.log(user);
 
-    if (!user || user.role !== "admin") {
-      return res.status(403).json({ msg: "access denied" });
-    }
-    res.user = user;
-    next();
-  } catch (error) {
-    res.status(400).json({ msg: "something went wrong", error: error.message });
-  }
-}
+//     if (!user || user.role !== "admin") {
+//       return res.status(403).json({ msg: "access denied" });
+//     }
+//     res.user = user;
+//     next();
+//   } catch (error) {
+//     res.status(400).json({ msg: "something went wrong", error: error.message });
+//   }
+// }
 
 // async function verifyUser(req, res, next) {
 //   try {
@@ -114,7 +114,6 @@ async function verifyAdmin(req, res, next) {
 
 router.post(
   "/course/online-course/:courseId",
-  verifyAdmin,
   upload.fields([
     { name: "video", maxCount: 1 },
     { name: "image", maxCount: 1 },
@@ -180,7 +179,6 @@ router.get("/course/online-course/:courseId", async (req, res) => {
 
 router.patch(
   "/course/:courseId/video/:videoId",
-  verifyAdmin,
   upload.fields([
     { name: "video", maxCount: 1 },
     { name: "image", maxCount: 1 },
@@ -214,7 +212,7 @@ router.patch(
 );
 
 // DELETE
-router.delete("/course/:courseId/video/:videoId", verifyAdmin, async (req, res) => {
+router.delete("/course/:courseId/video/:videoId", async (req, res) => {
   try {
     const { courseId, videoId } = req.params;
     const deleted = await CourseVideo.findByIdAndDelete(videoId);
