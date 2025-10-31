@@ -68,7 +68,8 @@ router.post("/products", upload.array("images", 4), async (req, res) => {
       originalPrice: req.body.originalPrice,
       discountedPrice: req.body.discountedPrice,
       category: categoryBack._id,
-      isActive: req.body.inStock,
+      // isActive: req.body.isActive,
+      inStock: req.body.inStock,
       images: imageUrls,
     });
 
