@@ -10,11 +10,12 @@ const productSchema = new mongoose.Schema(
     info: { type: String },
     category: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Category", // reference to Category collection
+      ref: "Category",
       required: true,
     },
-    images: [{ type: String }], // store multiple images
+    images: [{ type: String }],
     isActive: { type: Boolean, default: true },
+    inStock: { type: Boolean, default: true },
     createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
