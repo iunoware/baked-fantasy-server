@@ -33,48 +33,6 @@ router.post("/admin/user", async (req, res) => {
   }
 });
 
-// POST: Verify admin login
-router.post("/admin/login", async (req, res) => {
-  try {
-    const { name, password } = req.body;
-
-    // 1️⃣ Check empty fields
-    if (!name || !password) {
-      return res.status(400).json({ msg: "Name and password required" });
-    }
-
-    // 2️⃣ Find the admin in DB
-    const admin = await Admin.findOne({ name });
-    if (!admin) {
-      return res.status(404).json({ msg: "Admin not found" });
-    }
-
-    // 3️⃣ Verify password
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) {
-      return res.status(401).json({ msg: "Password incorrect" });
-    }
-
-    // 4️⃣ Create JWT token
-    const token = jwt.sign(
-      { id: admin._id, name: admin.name, isMaster: admin.isMaster },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE }
-    );
-
-    res.status(200).json({
-      msg: "Login successful",
-      token,
-      admin: {
-        name: admin.name,
-        isMaster: admin.isMaster,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
 // POST: Create a new admin by master admin
 router.post("/admin/newUser", async (req, res) => {
   try {
@@ -122,7 +80,112 @@ router.post("/admin/newUser", async (req, res) => {
   }
 });
 
-// ✅ Example of a protected admin route
+// Delete Admin By master only
+router.post("/admin/delete/:id", async (req, res) => {
+  try {
+    const { masterName, masterPassword } = req.body;
+    const { id } = req.params;
+
+    // 1️⃣ Check all fields
+    if (!masterName || !masterPassword) {
+      return res.status(400).json({ msg: "All fields required" });
+    }
+    // 2️⃣ Verify master admin
+    const master = await Admin.findOne({ name: masterName, isMaster: true });
+    if (!master) {
+      return res.status(404).json({ msg: "Master admin not found" });
+    }
+
+    const isMatch = await bcrypt.compare(masterPassword, master.password);
+    if (!isMatch) {
+      return res.status(401).json({ msg: "Invalid master password" });
+    }
+
+    // 3️⃣ delete Admin
+    const admin = await Admin.findByIdAndDelete(id);
+
+    if (!admin) {
+      return res.status(404).json({ msg: "Admin not found" });
+    }
+
+    res.status(200).json({ msg: "Admin deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Error deleting admin", error: error.message });
+  }
+});
+
+// Delete Admin
+router.delete("/admin/user/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const admin = await Admin.findByIdAndDelete(id);
+
+    if (!admin) {
+      return res.status(404).json({ msg: "Admin not found" });
+    }
+
+    res.status(200).json({ msg: "Admin deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Error deleting admin", error: error.message });
+  }
+});
+
+// POST: Verify admin login
+router.post("/admin/login", async (req, res) => {
+  try {
+    const { name, password } = req.body;
+
+    // 1️⃣ Check empty fields
+    if (!name || !password) {
+      return res.status(400).json({ msg: "Name and password required" });
+    }
+
+    // 2️⃣ Find the admin in DB
+    const admin = await Admin.findOne({ name });
+    if (!admin) {
+      return res.status(404).json({ msg: "Admin not found" });
+    }
+
+    // 3️⃣ Verify password
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) {
+      return res.status(401).json({ msg: "Password incorrect" });
+    }
+
+    // 4️⃣ Create JWT token
+    const token = jwt.sign(
+      { id: admin._id, name: admin.name, isMaster: admin.isMaster },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE }
+    );
+
+    res.status(200).json({
+      msg: "Login successful",
+      token,
+      admin: {
+        name: admin.name,
+        isMaster: admin.isMaster,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get All Admin
+router.get("/admin/user", async (req, res) => {
+  try {
+    const admin = await Admin.find();
+    res.status(200).json(admin);
+  } catch (error) {
+    res.status(404).json("Error Fetching Admins", error);
+  }
+});
+
+// Example of a protected admin route
 router.get("/admin/dashboard", verifyAdmin, (req, res) => {
   res.status(200).json({
     msg: "Welcome Admin, you are verified!",
