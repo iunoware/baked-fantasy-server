@@ -1,6 +1,8 @@
+import jwt from "jsonwebtoken";
 import express from "express";
 import bcrypt from "bcryptjs";
 import Admin from "../models/admin.js";
+import verifyAdmin from "../middleware/tokenverify.js";
 
 const router = express.Router();
 
@@ -32,23 +34,42 @@ router.post("/admin/user", async (req, res) => {
 });
 
 // POST: Verify admin login
-router.post("/admin/check", async (req, res) => {
+router.post("/admin/login", async (req, res) => {
   try {
     const { name, password } = req.body;
 
-    if (!name || !password)
+    // 1️⃣ Check empty fields
+    if (!name || !password) {
       return res.status(400).json({ msg: "Name and password required" });
-    const admin = await Admin.findOne({ name });
-    if (!admin) {
-      return res.status(404).json({ msg: "User not found" });
     }
 
+    // 2️⃣ Find the admin in DB
+    const admin = await Admin.findOne({ name });
+    if (!admin) {
+      return res.status(404).json({ msg: "Admin not found" });
+    }
+
+    // 3️⃣ Verify password
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
       return res.status(401).json({ msg: "Password incorrect" });
     }
 
-    res.status(200).json({ msg: "Login successful", admin });
+    // 4️⃣ Create JWT token
+    const token = jwt.sign(
+      { id: admin._id, name: admin.name, isMaster: admin.isMaster },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE }
+    );
+
+    res.status(200).json({
+      msg: "Login successful",
+      token,
+      admin: {
+        name: admin.name,
+        isMaster: admin.isMaster,
+      },
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -99,6 +120,14 @@ router.post("/admin/newUser", async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+// ✅ Example of a protected admin route
+router.get("/admin/dashboard", verifyAdmin, (req, res) => {
+  res.status(200).json({
+    msg: "Welcome Admin, you are verified!",
+    admin: req.admin,
+  });
 });
 
 export default router;
