@@ -50,6 +50,7 @@ router.post(
       const essCategory = await EssentialCategory.create({
         title: req.body.title,
         subject: req.body.subject || null,
+        isActive: req.body.isActive,
         imageUrl: req.file ? `/uploads/${req.file.filename}` : null, // ✅ fixed field name
       });
       res.status(201).json(essCategory);
