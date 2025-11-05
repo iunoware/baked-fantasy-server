@@ -15,6 +15,7 @@ const equipmentSchema = new mongoose.Schema(
     },
     images: [{ type: String }],
     inStock: { type: Boolean, default: true },
+    isActive: { type: Boolean, default: true },
     createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }

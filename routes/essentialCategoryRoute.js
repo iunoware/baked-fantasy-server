@@ -71,7 +71,8 @@ router.get("/ess-categories", async (req, res) => {
 });
 
 // Get single category by name
-router.get("/ess-categories/name/:title", async (req, res) => {
+// router.get("/ess-categories/name/:title", async (req, res) => {
+router.get("/ess-categories/:title", async (req, res) => {
   try {
     const essCategories = await EssentialCategory.findOne({
       title: req.params.title,
@@ -84,15 +85,21 @@ router.get("/ess-categories/name/:title", async (req, res) => {
 });
 
 // Update category
-router.put("/ess-categories/:id", async (req, res) => {
+router.patch("/ess-categories/:id", upload.single("image"), async (req, res) => {
   try {
-    const essCategory = await EssCategory.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const essCategory = await EssentialCategory.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
     if (!essCategory) return res.status(404).json({ error: "Category not found" });
+    console.log(essCategory);
     res.json(essCategory);
   } catch (error) {
+    console.log("error: ", error.message);
     res.status(400).json({ error: error.message });
   }
 });

@@ -20,62 +20,58 @@ const storage = multer.diskStorage({
 // accept multiple images
 const upload = multer({ storage });
 
-async function verifyAdmin(req, res, next) {
-  try {
-    const token = req.headers.authorization?.split(" ")[1]?.trim();
-    if (!token) return res.status(401).json({ msg: "No token provided" });
+// async function verifyAdmin(req, res, next) {
+//   try {
+//     const token = req.headers.authorization?.split(" ")[1]?.trim();
+//     if (!token) return res.status(401).json({ msg: "No token provided" });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     const user = await User.findById(decoded.id);
 
-    if (!user || user.role !== "admin") {
-      return res.status(403).json({ msg: "access denied" });
-    }
-    res.user = user;
-    next();
-  } catch (error) {
-    res.status(400).json({ msg: "something went wrong", error: error.message });
-  }
-}
+//     if (!user || user.role !== "admin") {
+//       return res.status(403).json({ msg: "access denied" });
+//     }
+//     res.user = user;
+//     next();
+//   } catch (error) {
+//     res.status(400).json({ msg: "something went wrong", error: error.message });
+//   }
+// }
 
 // CREATE product with category name + multiple images
-router.post(
-  "/bakingEssentials",
-  // verifyAdmin,
-  upload.array("images", 4),
-  async (req, res) => {
-    try {
-      // Find category by name
-      const category = await EssentialCategory.findOne({
-        title: req.body.category,
-      });
-      if (!category) {
-        return res.status(404).json({ error: "Category not found" });
-      }
-
-      // Build image URLs
-      const imageUrls = req.files
-        ? req.files.map((file) => `/uploads/${file.filename}`)
-        : [];
-
-      const essential = await Essentials.create({
-        title: req.body.title,
-        subject: req.body.subject,
-        info: req.body.info,
-        description: req.body.description,
-        originalPrice: req.body.originalPrice,
-        discountedPrice: req.body.discountedPrice,
-        category: category._id,
-        inStock: req.body.inStock,
-        images: imageUrls,
-      });
-
-      res.status(201).json(essential);
-    } catch (error) {
-      res.status(400).json({ error: error.message });
+router.post("/bakingEssentials", upload.array("images", 4), async (req, res) => {
+  try {
+    // Find category by name
+    const category = await EssentialCategory.findOne({
+      title: req.body.category,
+    });
+    if (!category) {
+      return res.status(404).json({ error: "Category not found" });
     }
+
+    // Build image URLs
+    const imageUrls = req.files
+      ? req.files.map((file) => `/uploads/${file.filename}`)
+      : [];
+
+    const essential = await Essentials.create({
+      title: req.body.title,
+      subject: req.body.subject,
+      info: req.body.info,
+      description: req.body.description,
+      originalPrice: req.body.originalPrice,
+      discountedPrice: req.body.discountedPrice,
+      category: category._id,
+      inStock: req.body.inStock,
+      isActive: req.body.isActive,
+      images: imageUrls,
+    });
+
+    res.status(201).json(essential);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
-);
+});
 
 // GET all Baking Essentials
 router.get("/bakingEssentials", async (req, res) => {
@@ -145,16 +141,19 @@ router.get("/essentials/category/:categoryName", async (req, res) => {
 });
 
 // UPDATE product
-router.put("/essentials/:id", verifyAdmin, async (req, res) => {
+router.patch("/essentials/:id", upload.array("images", 4), async (req, res) => {
   try {
-    const essential = await Essentials.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    const updateData = { ...req.body };
+
+    // If files exist, handle them
+    if (req.files && req.files.length > 0) {
+      updateData.images = req.files.map((file) => `/uploads/${file.filename}`);
+    }
+
+    const essential = await Essentials.findByIdAndUpdate(req.params.id, updateData, {
+      new: true,
+      runValidators: true,
+    });
     if (!essential) return res.status(404).json({ error: "Product not found" });
     res.json(essential);
   } catch (error) {
@@ -163,7 +162,7 @@ router.put("/essentials/:id", verifyAdmin, async (req, res) => {
 });
 
 // DELETE product
-router.delete("/essentials/:id", verifyAdmin, async (req, res) => {
+router.delete("/essentials/:id", async (req, res) => {
   try {
     const essential = await Essentials.findByIdAndDelete(req.params.id);
     if (!essential) return res.status(404).json({ error: "Product not found" });
