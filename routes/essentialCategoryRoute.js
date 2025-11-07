@@ -87,9 +87,16 @@ router.get("/ess-categories/:title", async (req, res) => {
 // Update category
 router.patch("/ess-categories/:id", upload.single("image"), async (req, res) => {
   try {
+    const updateData = { ...req.body };
+
+    if (req.file) {
+      // updateData.image = req.file.filename;
+      updateData.imageUrl = `/uploads/${req.file.filename}`;
+    }
+
     const essCategory = await EssentialCategory.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       {
         new: true,
         runValidators: true,
