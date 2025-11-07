@@ -4,6 +4,8 @@ import Essentials from "../models/essentials.js";
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 import EssentialCategory from "../models/essentialCategory.js";
+import fs from "fs";
+import path from "path";
 
 const router = express.Router();
 
@@ -160,6 +162,51 @@ router.patch("/essentials/:id", upload.array("images", 4), async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+
+// PATCH for individual images, one for removing and the other for adding
+router.patch(
+  "/essentials/:id/replace-image",
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { replaceIndex } = req.body;
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No new image uploaded" });
+      }
+
+      const newImagePath = `/uploads/${req.file.filename}`;
+      const product = await Essentials.findById(id);
+      if (!product) return res.status(404).json({ message: "Product not found" });
+
+      const index = parseInt(replaceIndex);
+      if (isNaN(index) || index < 0 || index >= product.images.length) {
+        return res.status(400).json({ message: "Invalid replace index" });
+      }
+
+      // Delete old image file if exists
+      const oldImagePath = path.join(
+        "uploads",
+        product.images[index].replace("/uploads/", "")
+      );
+      if (fs.existsSync(oldImagePath)) {
+        fs.unlinkSync(oldImagePath);
+      }
+
+      // Remove old image from array and push new one at end
+      product.images.splice(index, 1);
+      product.images.push(newImagePath);
+
+      await product.save();
+
+      res.json({ message: "Image replaced successfully", product });
+    } catch (err) {
+      console.error("Replace image error:", err.message);
+      res.status(500).json({ message: "Error replacing image", error: err.message });
+    }
+  }
+);
 
 // DELETE product
 router.delete("/essentials/:id", async (req, res) => {
