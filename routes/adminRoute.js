@@ -36,8 +36,7 @@ router.post("/admin/user", async (req, res) => {
 // POST: Create a new admin by master admin
 router.post("/admin/newUser", async (req, res) => {
   try {
-    const { name, password, confirmPass, masterName, masterPassword } =
-      req.body;
+    const { name, password, confirmPass, masterName, masterPassword } = req.body;
 
     // 1️⃣ Check all fields
     if (!name || !password || !confirmPass || !masterName || !masterPassword) {
@@ -159,7 +158,7 @@ router.post("/admin/login", async (req, res) => {
     const token = jwt.sign(
       { id: admin._id, name: admin.name, isMaster: admin.isMaster },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE }
+      { expiresIn: process.env.JWT_EXPIRE },
     );
 
     res.status(200).json({
