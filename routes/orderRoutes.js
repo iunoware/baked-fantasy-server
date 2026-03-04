@@ -141,4 +141,21 @@ router.patch("/orders/:id", async (req, res) => {
   }
 });
 
+router.get("/orders/today", async (req, res) => {
+  try {
+    const today = new Date();
+
+    const startOfDay = new Date(today.setUTCHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setUTCDate(23, 59, 59, 999));
+
+    const totalOrdersToday = await Order.countDocuments({
+      createdAt: { $gte: startOfDay, $lte: endOfDay },
+    });
+
+    res.status(200).json({ totalOrdersToday });
+  } catch (error) {
+    res.status(500).json({ msg: "something went wrong", error: error.message });
+  }
+});
+
 export default router;
