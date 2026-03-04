@@ -81,4 +81,4 @@ This codebase is proprietary and intended for official use only.
 
 ## Website link
 
-[Link](https://thebakedfantasy.com)
+[https://thebakedfantasy.com](https://thebakedfantasy.com)
