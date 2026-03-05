@@ -130,6 +130,28 @@ router.get("/orders/today", async (req, res) => {
   }
 });
 
+router.get("/orders/count", async (req, res) => {
+  try {
+    // all these promise run in parallel
+    const [essentialSales, cakeSales, courseSales] = await Promise.all([
+      Order.countDocuments({ productType: "essential" }),
+      Order.countDocuments({ productType: "cake" }),
+      Order.countDocuments({ productType: "course" }),
+    ]);
+
+    const totalOrders = essentialSales + cakeSales + courseSales;
+
+    res.status(200).json({
+      essentialSales: essentialSales,
+      cakeSales: cakeSales,
+      courseSales: courseSales,
+      totalOrders: totalOrders,
+    });
+  } catch (error) {
+    res.status(500).json({ msg: "something went wrong", error: error.message });
+  }
+});
+
 //to GET specific order
 router.get("/orders/:id", async (req, res) => {
   try {
