@@ -29,17 +29,10 @@ import essentialCategoryRoutes from "./routes/essentialCategoryRoute.js";
 import productRoutes from "./routes/productRoutes.js";
 import essentialsRoutes from "./routes/essentialsRoutes.js";
 import myLearning from "./routes/myLearning.js";
-import cart from "./routes/cartRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
 import offlineCourseRoute from "./routes/offlineCourseRoute.js";
 import bannerRoute from "./routes/bannerRoute.js";
 import adminRoute from "./routes/adminRoute.js";
-
-// import cart from "./routes/cartRoutes.js";
-
-// import userVerification from "./routes/userVerification.js";
-
-// other
-// import { title } from "process";
 
 dotenv.config();
 const PORT = process.env.PORT || 5000;
@@ -47,7 +40,7 @@ const PORT = process.env.PORT || 5000;
 const app = express();
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", "http://localhost:3000"],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
   })
@@ -57,9 +50,7 @@ app.use(express.urlencoded({ extended: true }));
 
 connectDB();
 
-// app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// for authentication
+// Register all routes
 app.use("/", authRoutes);
 app.use("/", courseRoutes);
 app.use("/", courseVideoRoutes);
@@ -71,9 +62,8 @@ app.use("/", essentialsRoutes);
 app.use("/", myLearning);
 app.use("/", bannerRoute);
 app.use("/", adminRoute);
-
-app.use("/", cart);
-// app.use("/", userVerification);
+app.use("/", offlineCourseRoute);
+app.use("/", cartRoutes);
 
 app.use("/uploads", express.static("uploads"));
 // app.use("/", userVerification);
@@ -96,7 +86,7 @@ async function verifyUser(req, res, next) {
 }
 
 app.get("/uploads/:fileName", verifyUser, (req, res) => {
-  const fileName = req.params.filename;
+  const fileName = req.params.fileName;
   const options = {
     root: path.join(process.cwd(), "uploads"),
   };
@@ -107,49 +97,6 @@ app.get("/uploads/:fileName", verifyUser, (req, res) => {
     }
   });
 });
-
-app.use("/", offlineCourseRoute);
-
-app.use("/", cart);
-// app.use("/", userVerification);
-
-// app.use("/", cart);
-
-app.use("/uploads", express.static("uploads"));
-// app.use("/", userVerification);
-
-// NEW CODE
-// async function verifyUser(req, res, next) {
-//   try {
-//     const token = req.headers.authorization?.split(" ")[1];
-//     if (!token) return res.status(401).json({ msg: "Unauthorized" });
-
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-//     const user = await User.findById(decoded.id);
-
-//     if (!user) return res.status(403).json({ msg: "User not found" });
-
-//     req.user = user;
-//     next();
-//   } catch (error) {
-//     res.status(400).json({ msg: "Invalid token", error: error.message });
-//   }
-// }
-
-// app.get("/uploads/:fileName", verifyUser, (req, res) => {
-//   const fileName = req.params.filename;
-//   const options = {
-//     root: path.join(process.cwd(), "uploads"),
-//   };
-//   res.sendFile(fileName, options, (err) => {
-//     if (err) {
-//       console.error(err);
-//       res.status(404).send("File not found");
-//     }
-//   });
-// });
-// NEW CODE
-// CURRENTLY NEED TO WORK ON THIS
 
 app.use((err, req, res, next) => {
   console.error("Server Error:", err);

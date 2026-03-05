@@ -82,20 +82,39 @@ router.get("/cart/:userId", async (req, res) => {
 router.put("/cart", async (req, res) => {
   try {
     const { userId, productId, quantity } = req.body;
-    const cart = await Cart.findOne({ userId });
 
-    if (!cart) return res.status(404).json({ msg: "Cart not found" });
-
-    const itemIndex = cart.items.findIndex((i) => i.productId.toString() === productId);
-    if (itemIndex > -1) {
-      cart.items[itemIndex].quantity = quantity;
-      await cart.save();
-      res.json({ message: "Cart updated", cart });
-    } else {
-      res.status(404).json({ msg: "Product not found in cart" });
+    if (!userId || !productId) {
+      return res.status(400).json({ msg: "userId and productId are required" });
     }
+
+    let cart = await Cart.findOne({ userId });
+
+    if (!cart) {
+      // If cart doesn't exist, create it (upsert behavior)
+      cart = await Cart.create({
+        userId,
+        items: [{ productId, quantity: Number(quantity) }]
+      });
+      return res.json({ message: "Cart created and updated", cart });
+    }
+
+    const itemIndex = cart.items.findIndex(
+      (i) => i.productId.toString() === productId
+    );
+
+    if (itemIndex > -1) {
+      // Update existing item
+      cart.items[itemIndex].quantity = Number(quantity);
+    } else {
+      // Add new item to existing cart
+      cart.items.push({ productId, quantity: Number(quantity) });
+    }
+
+    await cart.save();
+    res.json({ message: "Cart updated successfully", cart });
   } catch (error) {
-    res.status(500).json({ msg: error.message });
+    console.error("PUT /cart error:", error);
+    res.status(500).json({ msg: "Failed to update cart", error: error.message });
   }
 });
 
