@@ -9,6 +9,11 @@ const orderSchema = new mongoose.Schema(
       ref: User,
       required: true,
     },
+    productType: {
+      type: String,
+      enum: ["essential", "cake", "course"],
+      required: true,
+    },
     products: [
       {
         productId: {
@@ -34,7 +39,7 @@ const orderSchema = new mongoose.Schema(
     shippingAddress: { type: String, required: true },
     billingAddress: { type: String, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Order = mongoose.model("Order", orderSchema);
