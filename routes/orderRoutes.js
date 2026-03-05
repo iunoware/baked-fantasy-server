@@ -71,7 +71,7 @@ router.post("/orders", authMiddleware, async (req, res) => {
   try {
     if (!req.body) return res.status(400).json({ msg: "req.body is missing!" });
 
-    const { products = [], shippingAddress, billingAddress } = req.body;
+    const { products = [], productType, shippingAddress, billingAddress } = req.body;
 
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ msg: "products cna't be an empty array!" });
@@ -89,6 +89,7 @@ router.post("/orders", authMiddleware, async (req, res) => {
       userId: req.user._id,
       products: normalized,
       totalPrice,
+      productType,
       shippingAddress,
       billingAddress,
     });
@@ -106,6 +107,48 @@ router.get("/orders", async (req, res) => {
     res.json({ length: orders.length, orders });
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+// to get the orders for today (overall orders)
+router.get("/orders/today", async (req, res) => {
+  try {
+    const today = new Date();
+
+    const startOfDay = new Date(today.setUTCHours(0, 0, 0, 0));
+    const endOfDay = new Date(today.setUTCDate(23, 59, 59, 999));
+
+    const totalOrdersToday = await Order.countDocuments({
+      createdAt: { $gte: startOfDay, $lte: endOfDay },
+    });
+
+    // console.log("orders today: ", totalOrdersToday);
+
+    res.status(200).json({ totalOrdersToday });
+  } catch (error) {
+    res.status(500).json({ msg: "something went wrong", error: error.message });
+  }
+});
+
+router.get("/orders/count", async (req, res) => {
+  try {
+    // all these promise run in parallel
+    const [essentialSales, cakeSales, courseSales] = await Promise.all([
+      Order.countDocuments({ productType: "essential" }),
+      Order.countDocuments({ productType: "cake" }),
+      Order.countDocuments({ productType: "course" }),
+    ]);
+
+    const totalOrders = essentialSales + cakeSales + courseSales;
+
+    res.status(200).json({
+      essentialSales: essentialSales,
+      cakeSales: cakeSales,
+      courseSales: courseSales,
+      totalOrders: totalOrders,
+    });
+  } catch (error) {
+    res.status(500).json({ msg: "something went wrong", error: error.message });
   }
 });
 
@@ -138,23 +181,6 @@ router.patch("/orders/:id", async (req, res) => {
     res.json({ msg: "order updated successfully" });
   } catch (error) {
     res.status(400).json({ msg: "something went wrong", error: error.message });
-  }
-});
-
-router.get("/orders/today", async (req, res) => {
-  try {
-    const today = new Date();
-
-    const startOfDay = new Date(today.setUTCHours(0, 0, 0, 0));
-    const endOfDay = new Date(today.setUTCDate(23, 59, 59, 999));
-
-    const totalOrdersToday = await Order.countDocuments({
-      createdAt: { $gte: startOfDay, $lte: endOfDay },
-    });
-
-    res.status(200).json({ totalOrdersToday });
-  } catch (error) {
-    res.status(500).json({ msg: "something went wrong", error: error.message });
   }
 });
 
