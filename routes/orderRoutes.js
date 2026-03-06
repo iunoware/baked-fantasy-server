@@ -68,10 +68,17 @@ const authMiddleware = async (req, res, next) => {
 
 // to POST an order
 router.post("/orders", authMiddleware, async (req, res) => {
+  console.log(req.body);
   try {
     if (!req.body) return res.status(400).json({ msg: "req.body is missing!" });
 
-    const { products = [], productType, shippingAddress, billingAddress } = req.body;
+    const {
+      // name,
+      products = [],
+      productType,
+      shippingAddress,
+      billingAddress,
+    } = req.body;
 
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ msg: "products cna't be an empty array!" });
@@ -83,11 +90,15 @@ router.post("/orders", authMiddleware, async (req, res) => {
       price: p.price,
     }));
 
-    let totalPrice = normalized.reduce((sum, p) => sum + p.quantity * p.price, 0);
+    let totalPrice = normalized.reduce(
+      (sum, p) => sum + p.quantity * p.price,
+      0,
+    );
 
     const newOrder = await Order.create({
       userId: req.user._id,
       products: normalized,
+      name: req.user.name,
       totalPrice,
       productType,
       shippingAddress,
@@ -104,6 +115,27 @@ router.get("/orders", async (req, res) => {
   try {
     const orders = await Order.find();
     if (!orders) return res.status(400).json({ msg: "can't find orders" });
+
+    // Grouping and populating based on productType
+    const essentialOrders = orders.filter((o) => o.productType === "essential");
+    const cakeOrders = orders.filter((o) => o.productType === "cake");
+    const courseOrders = orders.filter((o) => o.productType === "course");
+
+    await Promise.all([
+      Order.populate(essentialOrders, {
+        path: "products.productId",
+        model: "Essentials",
+      }),
+      Order.populate(cakeOrders, {
+        path: "products.productId",
+        model: "Product",
+      }),
+      Order.populate(courseOrders, {
+        path: "products.productId",
+        model: "Course",
+      }),
+    ]);
+
     res.json({ length: orders.length, orders });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -352,7 +384,8 @@ router.get("/orders/overall", async (req, res) => {
 router.get("/orders/:id", async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    if (!order) return res.status(400).json({ msg: "can't find the specific order" });
+    if (!order)
+      return res.status(400).json({ msg: "can't find the specific order" });
     res.json(order);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -362,7 +395,13 @@ router.get("/orders/:id", async (req, res) => {
 // to PATCH a an order
 router.patch("/orders/:id", async (req, res) => {
   try {
-    const { orderStatus, shippingAddress, billingAddress, paymentStatus } = req.body;
+    const {
+      orderStatus,
+      shippingAddress,
+      billingAddress,
+      paymentStatus,
+      deliveryPartner,
+    } = req.body;
 
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(400).json({ msg: "order not found" });
@@ -371,6 +410,7 @@ router.patch("/orders/:id", async (req, res) => {
     if (shippingAddress) order.shippingAddress = shippingAddress;
     if (billingAddress) order.billingAddress = billingAddress;
     if (paymentStatus) order.paymentStatus = paymentStatus;
+    if (deliveryPartner) order.deliveryPartner = deliveryPartner;
 
     await order.save();
 
