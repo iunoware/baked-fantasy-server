@@ -130,52 +130,33 @@ router.get("/orders/revenue", async (req, res) => {
   }
 });
 
-// to get the orders for today
-router.get("/orders/today", async (req, res) => {
+// to get today's order in detail
+router.get("/orders/todayDetail", async (req, res) => {
   try {
     const today = new Date();
 
-    const startOfDay = new Date(today.setUTCHours(0, 0, 0, 0));
-    const endOfDay = new Date(today.setUTCDate(23, 59, 59, 999));
+    // const startOfDay = new Date(today.getUTCHours(0, 0, 0, 0));
+    // const endOfDay = new Date(today.getUTCHours(23, 59, 59, 999));
 
-    // const totalOrdersToday = await Order.countDocuments({
-    //   createdAt: { $gte: startOfDay, $lte: endOfDay },
-    // });
+    const startOfDay = new Date(today);
+    startOfDay.setUTCHours(0, 0, 0, 0);
 
-    const [essentialSales, cakeSales, courseSales] = await Promise.all([
-      Order.countDocuments({
-        productType: "essential",
-        createdAt: { $gte: startOfDay, $lte: endOfDay },
-      }),
-      Order.countDocuments({
-        productType: "cake",
-        createdAt: { $gte: startOfDay, $lte: endOfDay },
-      }),
-      Order.countDocuments({
-        productType: "course",
-        createdAt: { $gte: startOfDay, $lte: endOfDay },
-      }),
-    ]);
+    const endOfDay = new Date(today);
+    endOfDay.setUTCHours(23, 59, 59, 999);
 
-    const totalOrders = essentialSales + cakeSales + courseSales;
-
-    res.status(200).json({
-      essentialSales: essentialSales,
-      cakeSales: cakeSales,
-      courseSales: courseSales,
-      totalOrders: totalOrders,
+    const orders = await Order.find({
+      createdAt: { $gte: startOfDay, $lte: endOfDay },
     });
 
-    // console.log("orders today: ", totalOrdersToday);
-
-    res.status(200).json({ totalOrdersToday });
+    res.json({ orders });
+    console.log(orders);
   } catch (error) {
     res.status(500).json({ msg: "something went wrong", error: error.message });
   }
 });
 
 // to get the orders for today
-router.get("/orders/thisWeek", async (req, res) => {
+router.get("/orders/today", async (req, res) => {
   try {
     const today = new Date();
 
@@ -248,19 +229,23 @@ router.get("/orders/thisWeek", async (req, res) => {
         999,
       ),
     );
+
+    const start = sevenDaysAgo;
+    const end = endOfToday;
+
     // all these promise run in parallel
     const [essentialSales, cakeSales, courseSales] = await Promise.all([
       Order.countDocuments({
         productType: "essential",
-        createdAt: { $gte: sevenDaysAgo, $lte: endOfToday },
+        createdAt: { $gte: start, $lte: end },
       }),
       Order.countDocuments({
         productType: "cake",
-        createdAt: { $gte: sevenDaysAgo, $lte: endOfToday },
+        createdAt: { $gte: start, $lte: end },
       }),
       Order.countDocuments({
         productType: "course",
-        createdAt: { $gte: sevenDaysAgo, $lte: endOfToday },
+        createdAt: { $gte: start, $lte: end },
       }),
     ]);
 
