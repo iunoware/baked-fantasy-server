@@ -1,43 +1,89 @@
 import mongoose from "mongoose";
-import User from "./user.js";
-import Product from "./products.js";
 
 const orderSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: User,
+      ref: "User",
       required: true,
     },
+
+    name: {
+      type: String,
+      required: true,
+    },
+
     productType: {
       type: String,
       enum: ["essential", "cake", "course"],
       required: true,
     },
+
     products: [
       {
         productId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: Product,
+          ref: "Product",
           required: true,
         },
-        quantity: { type: Number, required: true },
-        price: { type: Number, required: true },
+        quantity: {
+          type: Number,
+          required: true,
+        },
+        price: {
+          type: Number,
+          required: true,
+        },
       },
     ],
-    totalPrice: { type: Number, required: true },
+
+    shippingAddress: {
+      name: String,
+      phone: String,
+      address: String,
+      city: String,
+      pincode: String,
+      locationNote: String,
+    },
+
+    billingAddress: {
+      type: String,
+    },
+
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed"],
       default: "pending",
     },
+
     orderStatus: {
       type: String,
-      enum: ["Pending", "processing", "shipped", "delivered", "Canceled"],
-      default: "Pending",
+      enum: [
+        "confirmed",
+        "preparing",
+        "packed",
+        "out_for_delivery",
+        "delivered",
+        "cancelled",
+      ],
+      default: "confirmed",
     },
-    shippingAddress: { type: String, required: true },
-    billingAddress: { type: String, required: true },
+
+    deliveryPartner: {
+      name: String,
+      phone: String,
+      vehicle: String,
+    },
+
+    pricing: {
+      itemsTotal: Number,
+      deliveryFee: Number,
+      totalAmount: Number,
+    },
+
+    estimatedDeliveryTime: String,
+
+    deliveredAt: Date,
   },
   { timestamps: true },
 );
