@@ -4,8 +4,12 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String },
-  mobileNumber: { type: Number, required: true },
+  mobileNumber: { type: Number, default: null },
   role: { type: String }, //new code
+  provider: {
+    type: String,
+    default: "local",
+  },
   purchasedCourses: [
     {
       courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
