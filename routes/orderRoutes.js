@@ -90,10 +90,7 @@ router.post("/orders", authMiddleware, async (req, res) => {
       price: p.price,
     }));
 
-    let totalPrice = normalized.reduce(
-      (sum, p) => sum + p.quantity * p.price,
-      0,
-    );
+    let totalPrice = normalized.reduce((sum, p) => sum + p.quantity * p.price, 0);
 
     const newOrder = await Order.create({
       userId: req.user._id,
@@ -181,7 +178,7 @@ router.get("/orders/todayDetail", async (req, res) => {
     });
 
     res.json({ orders });
-    console.log(orders);
+    // console.log(orders);
   } catch (error) {
     res.status(500).json({ msg: "something went wrong", error: error.message });
   }
@@ -369,8 +366,7 @@ router.get("/orders/overall", async (req, res) => {
 router.get("/orders/:id", async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    if (!order)
-      return res.status(400).json({ msg: "can't find the specific order" });
+    if (!order) return res.status(400).json({ msg: "can't find the specific order" });
     res.json(order);
   } catch (error) {
     res.status(400).json({ error: error.message });
