@@ -14,26 +14,57 @@ const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
 // for google login
 router.post("/google-login", async (req, res) => {
   try {
     const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({ error: "Token is required" });
+    }
 
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
-    const { email, name } = payload;
+    console.log("Google Auth Payload:", payload); // Debugging log
+
+    const { email, name, picture, sub } = payload;
+
+    if (!email) {
+      return res
+        .status(400)
+        .json({ error: "Google account does not have an email" });
+    }
 
     let user = await User.findOne({ email });
 
     if (!user) {
+      console.log("Creating new Google user:", email);
       user = await User.create({
-        name,
-        email,
-        password: "",
+        name: name || email.split("@")[0],
+        email: email,
+        password: null, // No password for Google users
+        provider: "google",
+        role: "user",
+        // You could also store picture or sub if needed
       });
+    } else {
+      console.log("Existing Google user logged in:", email);
+      // Optional: Update provider if user existed as local but logged in with Google
+      if (user.provider !== "google") {
+        user.provider = "google";
+        await user.save();
+      }
     }
 
     const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
@@ -42,15 +73,20 @@ router.post("/google-login", async (req, res) => {
 
     res.json({ msg: "Google Login Success", token: jwtToken, user });
   } catch (err) {
-    console.error("Google Login error", err);
-    res.status(500).json({ error: "Google Login Failed" });
+    console.error("GOOGLE LOGIN ERROR DETAILS:", err);
+    res.status(500).json({
+      error: "Google Login Failed",
+      details: err.message,
+      stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+    });
   }
 });
 
 // for user registration
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, mobileNumber, purchasedCourses } = req.body;
+    const { name, email, password, mobileNumber, purchasedCourses, provider } =
+      req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ msg: "User already exists" });
@@ -95,6 +131,36 @@ router.post("/login", async (req, res) => {
 router.post("/send-otp", async (req, res) => {
   try {
     const { email, type } = req.body;
+
+    const existingUser = await User.findOne({ email });
+
+    // Registration check
+    if (type === "register" && existingUser) {
+      if (existingUser.provider === "google") {
+        return res.status(400).json({
+          msg: "This email is registered with Google. Please login using Google.",
+        });
+      }
+
+      return res.status(400).json({
+        msg: "User already exists. Please login.",
+      });
+    }
+
+    // Reset password check
+    if (type === "reset") {
+      if (!existingUser) {
+        return res.status(400).json({
+          msg: "No account found with this email.",
+        });
+      }
+      if (existingUser.provider === "google") {
+        return res.status(400).json({
+          msg: "This account uses Google login. Please login with Google.",
+        });
+      }
+    }
+
     const otp = generateOTP();
 
     await Otp.deleteMany({ email, type });
@@ -103,13 +169,6 @@ router.post("/send-otp", async (req, res) => {
       email,
       otp,
       type,
-    });
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
     });
 
     await transporter.sendMail({
@@ -121,6 +180,7 @@ router.post("/send-otp", async (req, res) => {
 
     res.json({ msg: "OTP sent successfully" });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -142,6 +202,30 @@ router.post("/verify-otp", async (req, res) => {
     await Otp.deleteMany({ email, type });
 
     res.json({ msg: "OTP verified successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({ msg: "Email and new password are required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ msg: "Password reset successful" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
