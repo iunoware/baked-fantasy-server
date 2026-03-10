@@ -127,8 +127,9 @@ router.post("/orders", authMiddleware, async (req, res) => {
 
         return {
           productId: product._id,
-          name: product.name,
+          title: product.title,
           price: product.discountedPrice,
+          productType: product.productType,
           quantity: Number(p.quantity),
         };
       }),
@@ -168,20 +169,6 @@ router.post("/orders", authMiddleware, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-// old input method in postman
-//   {
-//   "products": [
-//     {
-//       "productId": "68bad6ed1d06d879e6708b62",
-//       "quantity": 2,
-//       "price": 200
-//     }
-//   ],
-//   "productType": "cake",
-//   "shippingAddress": "madurai, USA",
-//   "billingAddress": "Dubai, Australia"
-// }
 
 //to GET all orders
 router.get("/orders", async (req, res) => {
@@ -274,15 +261,18 @@ router.get("/orders/today", async (req, res) => {
 
     const [essentialSales, cakeSales, courseSales] = await Promise.all([
       Order.countDocuments({
+        // "products.productType": "Essential",
         productType: "essential",
         createdAt: { $gte: startOfDay, $lte: endOfDay },
       }),
       Order.countDocuments({
         productType: "cake",
+        // "products.productType": "Cake",
         createdAt: { $gte: startOfDay, $lte: endOfDay },
       }),
       Order.countDocuments({
         productType: "course",
+        // "products.productType": "Course",
         createdAt: { $gte: startOfDay, $lte: endOfDay },
       }),
     ]);
@@ -342,14 +332,17 @@ router.get("/orders/thisWeek", async (req, res) => {
     const [essentialSales, cakeSales, courseSales] = await Promise.all([
       Order.countDocuments({
         productType: "essential",
+        // "products.productType": "Essential",
         createdAt: { $gte: start, $lte: end },
       }),
       Order.countDocuments({
         productType: "cake",
+        // "products.productType": "Cake",
         createdAt: { $gte: start, $lte: end },
       }),
       Order.countDocuments({
         productType: "course",
+        // "products.productType": "Course",
         createdAt: { $gte: start, $lte: end },
       }),
     ]);
@@ -384,14 +377,17 @@ router.get("/orders/thisMonth", async (req, res) => {
     const [essentialSales, cakeSales, courseSales] = await Promise.all([
       Order.countDocuments({
         productType: "essential",
+        // "products.productType": "Essential",
         createdAt: { $gte: startOfMonth, $lte: endOfMonth },
       }),
       Order.countDocuments({
         productType: "cake",
+        // "products.productType": "Cake",
         createdAt: { $gte: startOfMonth, $lte: endOfMonth },
       }),
       Order.countDocuments({
         productType: "course",
+        // "products.productType": "Course",
         createdAt: { $gte: startOfMonth, $lte: endOfMonth },
       }),
     ]);
@@ -415,13 +411,16 @@ router.get("/orders/overall", async (req, res) => {
     // all these promise run in parallel
     const [essentialSales, cakeSales, courseSales] = await Promise.all([
       Order.countDocuments({
-        productType: "essential",
+        // productType: "essential",
+        "products.productType": "Essential",
       }),
       Order.countDocuments({
-        productType: "cake",
+        // productType: "cake",
+        "products.productType": "Cake",
       }),
       Order.countDocuments({
-        productType: "course",
+        // productType: "course",
+        "products.productType": "Course",
       }),
     ]);
 

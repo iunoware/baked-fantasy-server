@@ -16,9 +16,10 @@ const equipmentSchema = new mongoose.Schema(
     images: [{ type: String }],
     inStock: { type: Boolean, default: true },
     isActive: { type: Boolean, default: true },
+    productType: { type: String, enum: ["Essential"], default: "Essential" },
     createdAt: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Essentials = mongoose.model("Essentials", equipmentSchema);

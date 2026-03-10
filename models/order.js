@@ -115,9 +115,26 @@ const orderSchema = new mongoose.Schema(
     products: [
       {
         productId: mongoose.Schema.Types.ObjectId,
-        name: String,
-        price: Number,
-        quantity: Number,
+        title: {
+          type: String,
+          required: true,
+        },
+
+        price: {
+          type: Number,
+          required: true,
+        },
+
+        productType: {
+          type: String,
+          enum: ["Essential", "Cake", "Course"],
+          required: true,
+        },
+
+        quantity: {
+          type: Number,
+          required: true,
+        },
       },
     ],
 

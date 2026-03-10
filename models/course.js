@@ -15,6 +15,7 @@ const courseSchema = new mongoose.Schema({
   highlights: { required: true, type: [String] },
   price: { required: true, type: String },
   originalPrice: { required: true, type: String },
+  productType: { required: true, type: String, enum: ["Course"], default: "Course" },
   createdAt: { type: Date, default: Date.now },
 });
 
