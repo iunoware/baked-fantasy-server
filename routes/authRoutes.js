@@ -175,10 +175,73 @@ router.post("/send-otp", async (req, res) => {
     });
 
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: `"Baked Fantasy" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "Your OTP Code",
-      text: `Your verification OTP is: ${otp}`,
+      subject: "Your OTP Verification Code",
+      html: `
+  <div style="font-family: Arial, sans-serif; background:#f6f8fb; padding:40px 0;">
+    <table align="center" width="100%" style="max-width:520px;background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.08)">
+      
+      <!-- Header -->
+      <tr>
+        <td style="background:#ec4174;padding:20px;text-align:center">
+          <h2 style="color: #fff">THE BAKED FANTASY </h2>
+        </td>
+      </tr>
+
+      <!-- Content -->
+      <tr>
+        <td style="padding:30px 30px 10px 30px;text-align:center">
+          <h2 style="margin:0;color:#333;">Verify Your Email</h2>
+          <p style="color:#666;font-size:15px;margin-top:10px">
+            Use the verification code below to continue creating your account.
+          </p>
+        </td>
+      </tr>
+
+      <!-- OTP Box -->
+      <tr>
+        <td style="text-align:center;padding:20px">
+          <div style="
+            display:inline-block;
+            padding:14px 28px;
+            font-size:28px;
+            letter-spacing:6px;
+            font-weight:bold;
+            color:#ec4174;
+            background:#fff3f7;
+            border-radius:8px;
+            border:1px dashed #ec4174;
+          ">
+            ${otp}
+          </div>
+        </td>
+      </tr>
+
+      <!-- Expiration -->
+      <tr>
+        <td style="text-align:center;padding:10px 30px">
+          <p style="font-size:13px;color:#999;margin:0">
+            This OTP is valid for <strong>5 minutes</strong>.
+          </p>
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td style="padding:30px;text-align:center;border-top:1px solid #eee">
+          <p style="font-size:12px;color:#999;margin:0">
+            If you did not request this code, please ignore this email.
+          </p>
+          <p style="font-size:12px;color:#aaa;margin-top:6px">
+            © ${new Date().getFullYear()} Baked Fantasy
+          </p>
+        </td>
+      </tr>
+
+    </table>
+  </div>
+  `,
     });
 
     res.json({ msg: "OTP sent successfully" });
