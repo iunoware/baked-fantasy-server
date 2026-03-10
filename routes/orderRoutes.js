@@ -1,6 +1,7 @@
 import Order from "../models/order.js";
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
+import Product from "../models/products.js";
 import express from "express";
 
 const router = express.Router();
@@ -67,43 +68,105 @@ const authMiddleware = async (req, res, next) => {
 };
 
 // to POST an order
-router.post("/orders", authMiddleware, async (req, res) => {
-  console.log(req.body);
-  try {
-    if (!req.body) return res.status(400).json({ msg: "req.body is missing!" });
+// router.post("/orders", authMiddleware, async (req, res) => {
+//   console.log(req.body);
+//   try {
+//     if (!req.body) return res.status(400).json({ msg: "req.body is missing!" });
 
-    const {
-      // name,
-      products = [],
-      productType,
-      shippingAddress,
-      billingAddress,
-    } = req.body;
+//     const {
+//       // name,
+//       products = [],
+//       productType,
+//       shippingAddress,
+//       billingAddress,
+//     } = req.body;
+
+//     if (!Array.isArray(products) || products.length === 0) {
+//       return res.status(400).json({ msg: "products cna't be an empty array!" });
+//     }
+
+//     const normalized = products.map((p) => ({
+//       productId: p.productId,
+//       quantity: p.quantity,
+//       price: p.price,
+//     }));
+
+//     let totalPrice = normalized.reduce((sum, p) => sum + p.quantity * p.price, 0);
+
+//     const newOrder = await Order.create({
+//       userId: req.user._id,
+//       products: normalized,
+//       name: req.user.name,
+//       totalPrice,
+//       productType,
+//       shippingAddress,
+//       billingAddress,
+//     });
+//     res.json("success", newOrder);
+//   } catch (error) {
+//     res.status(400).json(error.message);
+//   }
+// });
+
+router.post("/orders", authMiddleware, async (req, res) => {
+  try {
+    const { products = [], shippingAddress, billingAddress } = req.body;
 
     if (!Array.isArray(products) || products.length === 0) {
-      return res.status(400).json({ msg: "products cna't be an empty array!" });
+      return res.status(400).json({ msg: "Products cannot be empty!" });
     }
 
-    const normalized = products.map((p) => ({
-      productId: p.productId,
-      quantity: p.quantity,
-      price: p.price,
-    }));
+    // Fetch product data from DB
+    const normalizedProducts = await Promise.all(
+      products.map(async (p) => {
+        const product = await Product.findById(p.productId);
 
-    let totalPrice = normalized.reduce((sum, p) => sum + p.quantity * p.price, 0);
+        if (!product) {
+          throw new Error("Product not found");
+        }
 
+        return {
+          productId: product._id,
+          title: product.title,
+          price: product.discountedPrice,
+          productType: product.productType,
+          quantity: Number(p.quantity),
+        };
+      }),
+    );
+
+    // Calculate total price
+    const totalPrice = normalizedProducts.reduce(
+      (sum, p) => sum + p.price * p.quantity,
+      0,
+    );
+
+    // Create order
     const newOrder = await Order.create({
-      userId: req.user._id,
-      products: normalized,
-      name: req.user.name,
-      totalPrice,
-      productType,
+      user: {
+        userId: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        phone: req.user.phone,
+      },
+
+      products: normalizedProducts,
+
       shippingAddress,
       billingAddress,
+
+      paymentStatus: "pending",
+      orderStatus: "confirmed",
+
+      totalPrice,
     });
-    res.json("success", newOrder);
+
+    res.json({
+      msg: "Order created successfully",
+      order: newOrder,
+    });
   } catch (error) {
-    res.status(400).json(error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -198,15 +261,18 @@ router.get("/orders/today", async (req, res) => {
 
     const [essentialSales, cakeSales, courseSales] = await Promise.all([
       Order.countDocuments({
+        // "products.productType": "Essential",
         productType: "essential",
         createdAt: { $gte: startOfDay, $lte: endOfDay },
       }),
       Order.countDocuments({
         productType: "cake",
+        // "products.productType": "Cake",
         createdAt: { $gte: startOfDay, $lte: endOfDay },
       }),
       Order.countDocuments({
         productType: "course",
+        // "products.productType": "Course",
         createdAt: { $gte: startOfDay, $lte: endOfDay },
       }),
     ]);
@@ -266,14 +332,17 @@ router.get("/orders/thisWeek", async (req, res) => {
     const [essentialSales, cakeSales, courseSales] = await Promise.all([
       Order.countDocuments({
         productType: "essential",
+        // "products.productType": "Essential",
         createdAt: { $gte: start, $lte: end },
       }),
       Order.countDocuments({
         productType: "cake",
+        // "products.productType": "Cake",
         createdAt: { $gte: start, $lte: end },
       }),
       Order.countDocuments({
         productType: "course",
+        // "products.productType": "Course",
         createdAt: { $gte: start, $lte: end },
       }),
     ]);
@@ -308,14 +377,17 @@ router.get("/orders/thisMonth", async (req, res) => {
     const [essentialSales, cakeSales, courseSales] = await Promise.all([
       Order.countDocuments({
         productType: "essential",
+        // "products.productType": "Essential",
         createdAt: { $gte: startOfMonth, $lte: endOfMonth },
       }),
       Order.countDocuments({
         productType: "cake",
+        // "products.productType": "Cake",
         createdAt: { $gte: startOfMonth, $lte: endOfMonth },
       }),
       Order.countDocuments({
         productType: "course",
+        // "products.productType": "Course",
         createdAt: { $gte: startOfMonth, $lte: endOfMonth },
       }),
     ]);
@@ -339,13 +411,16 @@ router.get("/orders/overall", async (req, res) => {
     // all these promise run in parallel
     const [essentialSales, cakeSales, courseSales] = await Promise.all([
       Order.countDocuments({
-        productType: "essential",
+        // productType: "essential",
+        "products.productType": "Essential",
       }),
       Order.countDocuments({
-        productType: "cake",
+        // productType: "cake",
+        "products.productType": "Cake",
       }),
       Order.countDocuments({
-        productType: "course",
+        // productType: "course",
+        "products.productType": "Course",
       }),
     ]);
 
@@ -362,7 +437,7 @@ router.get("/orders/overall", async (req, res) => {
   }
 });
 
-//to GET specific order
+// to GET specific order
 router.get("/orders/:id", async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
