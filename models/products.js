@@ -8,6 +8,7 @@ const productSchema = new mongoose.Schema(
     subject: { type: String },
     description: { type: String },
     info: { type: String },
+    // productType: { type: String, enum: ["Essential", "Cake", "Course"], required: true },
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
@@ -16,9 +17,10 @@ const productSchema = new mongoose.Schema(
     images: [{ type: String }],
     isActive: { type: Boolean, default: true },
     inStock: { type: Boolean, default: true },
+    productType: { type: String, enum: ["Cake"], default: "Cake" },
     createdAt: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Product = mongoose.model("Product", productSchema);
