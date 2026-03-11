@@ -13,8 +13,8 @@ const courseSchema = new mongoose.Schema({
   totalHours: { required: true, type: String },
   totalVideos: { required: true, type: String },
   highlights: { required: true, type: [String] },
-  price: { required: true, type: String },
-  originalPrice: { required: true, type: String },
+  discountedPrice: { required: true, type: Number },
+  originalPrice: { required: true, type: Number },
   productType: { required: true, type: String, enum: ["Course"], default: "Course" },
   createdAt: { type: Date, default: Date.now },
 });

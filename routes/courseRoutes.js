@@ -52,7 +52,7 @@ router.post("/course", upload.single("image"), async (req, res) => {
       description,
       totalHours,
       totalVideos,
-      price,
+      discountedPrice,
       originalPrice,
     } = req.body;
 
@@ -65,7 +65,7 @@ router.post("/course", upload.single("image"), async (req, res) => {
       totalHours,
       totalVideos,
       highlights: req.body.highlights ? JSON.parse(req.body.highlights) : [],
-      price,
+      discountedPrice,
       originalPrice,
     });
     res.json({ msg: "course created successfully", newCourse });
