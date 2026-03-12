@@ -23,7 +23,7 @@ import path from "path";
 import authRoutes from "./routes/authRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import courseVideoRoutes from "./routes/courseVideoRoutes.js";
-import orderRoutes from "./routes/orderRoutes.js";
+// import orderRoutes from "./routes/orderRoutes.js";
 import productCategoryRoutes from "./routes/productCategoryRoutes.js";
 import essentialCategoryRoutes from "./routes/essentialCategoryRoute.js";
 import productRoutes from "./routes/productRoutes.js";
@@ -33,6 +33,7 @@ import cartRoutes from "./routes/cartRoutes.js";
 import offlineCourseRoute from "./routes/offlineCourseRoute.js";
 import bannerRoute from "./routes/bannerRoute.js";
 import adminRoute from "./routes/adminRoute.js";
+import searchRoute from "./routes/searchRoute.js";
 
 dotenv.config();
 const PORT = process.env.PORT || 5000;
@@ -43,7 +44,7 @@ app.use(
     origin: ["http://localhost:5173", "http://localhost:3000"],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
-  })
+  }),
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -54,7 +55,7 @@ connectDB();
 app.use("/", authRoutes);
 app.use("/", courseRoutes);
 app.use("/", courseVideoRoutes);
-app.use("/", orderRoutes);
+// app.use("/", orderRoutes);
 app.use("/", productCategoryRoutes);
 app.use("/", essentialCategoryRoutes);
 app.use("/", productRoutes);
@@ -64,6 +65,7 @@ app.use("/", bannerRoute);
 app.use("/", adminRoute);
 app.use("/", offlineCourseRoute);
 app.use("/", cartRoutes);
+app.use("/", searchRoute);
 
 app.use("/uploads", express.static("uploads"));
 // app.use("/", userVerification);
