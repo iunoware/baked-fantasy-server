@@ -7,11 +7,29 @@ const router = express.Router();
 router.get("/search", async (req, res) => {
   const query = req.query.q;
 
-  const products = await Product.find({
-    title: { $regex: query, $options: "i" },
-  });
+  if (!query) {
+    return res.json([]);
+  }
 
-  res.json(products);
+  try {
+    const [products, essentials] = await Promise.all([
+      Product.find({
+        title: { $regex: query, $options: "i" },
+        isActive: true,
+      }),
+      Essentials.find({
+        title: { $regex: query, $options: "i" },
+        isActive: true,
+      }),
+    ]);
+
+    const combinedResults = [...products, ...essentials];
+
+    res.json(combinedResults);
+  } catch (error) {
+    console.error("Search error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 export default router;
