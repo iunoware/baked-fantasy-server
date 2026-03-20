@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 const verifyAdmin = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(404).json({ msg: "No Token Provided" });
+    return res.status(404).json({ msg: "No Token Provided" });
   }
 
   const token = authHeader.split(" ")[1];
