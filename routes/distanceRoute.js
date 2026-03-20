@@ -1,5 +1,5 @@
 import express from "express";
-import axios from "axios";
+// import axios from "axios";
 
 const router = express.Router();
 
@@ -11,7 +11,7 @@ router.post("/distance", async (req, res) => {
       return res.status(400).json({ error: "Missing origin or destination" });
     }
 
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY?.replace(/[\s,]+/g, '');
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY?.replace(/[\s,]+/g, "");
 
     if (!apiKey) {
       console.error("Missing GOOGLE_MAPS_API_KEY in environment variables");
@@ -29,11 +29,15 @@ router.post("/distance", async (req, res) => {
       },
     );
 
-    if (!response.data || !response.data.rows || response.data.rows.length === 0) {
+    if (
+      !response.data ||
+      !response.data.rows ||
+      response.data.rows.length === 0
+    ) {
       console.error("Google API raw response:", response.data);
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: "Invalid response from Distance Matrix API",
-        details: response.data 
+        details: response.data,
       });
     }
 
@@ -45,17 +49,22 @@ router.post("/distance", async (req, res) => {
     const element = row.elements[0];
 
     if (element.status !== "OK") {
-      return res.status(400).json({ error: `Distance not found: ${element.status}` });
+      return res
+        .status(400)
+        .json({ error: `Distance not found: ${element.status}` });
     }
-    
+
     res.json({
       distanceValue: element.distance.value,
       distanceText: element.distance.text,
       durationText: element.duration.text,
-      durationValue: element.duration.value
+      durationValue: element.duration.value,
     });
   } catch (error) {
-    console.error("Distance API error:", error?.response?.data || error.message);
+    console.error(
+      "Distance API error:",
+      error?.response?.data || error.message,
+    );
     res.status(500).json({ error: "Server error calculating distance" });
   }
 });
