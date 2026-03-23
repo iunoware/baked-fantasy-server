@@ -35,6 +35,7 @@ import bannerRoute from "./routes/bannerRoute.js";
 import adminRoute from "./routes/adminRoute.js";
 import searchRoute from "./routes/searchRoute.js";
 import distanceRoute from "./routes/distanceRoute.js";
+import addressRoute from "./routes/addressRoute.js";
 
 dotenv.config();
 const PORT = process.env.PORT || 5000;
@@ -68,6 +69,7 @@ app.use("/", offlineCourseRoute);
 app.use("/", cartRoutes);
 app.use("/", searchRoute);
 app.use("/", distanceRoute);
+app.use("/", addressRoute);
 
 app.use("/uploads", express.static("uploads"));
 // app.use("/", userVerification);
