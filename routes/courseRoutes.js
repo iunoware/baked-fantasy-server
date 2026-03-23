@@ -48,6 +48,56 @@ router.post("/course", upload.single("thumbnail"), async (req, res) => {
   }
 });
 
+// post sections
+router.post("/course/:courseId/section", async (req, res) => {
+  try {
+    const { title, order } = req.body;
+
+    const course = await Course.findById(req.params.courseId);
+
+    course.sections.push({ title, order, lessons: [] });
+
+    await course.save();
+
+    res.json({ msg: "Section added", course });
+  } catch (err) {
+    res.status(400).json({ msg: err.message });
+  }
+});
+
+// add videos
+router.post(
+  "/course/:courseId/section/:sectionId/lesson",
+  upload.fields([
+    { name: "video", maxCount: 1 },
+    { name: "pdf", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const { title, duration, order } = req.body;
+
+      const course = await Course.findById(req.params.courseId);
+      const section = course.sections.id(req.params.sectionId);
+
+      section.lessons.push({
+        title,
+        duration,
+        order,
+        videoUrl: req.files?.video?.[0]
+          ? `/uploads/${req.files.video[0].filename}`
+          : null,
+        pdfUrl: req.files?.pdf?.[0] ? `/uploads/${req.files.pdf[0].filename}` : null,
+      });
+
+      await course.save();
+
+      res.json({ msg: "Lesson added successfully", course });
+    } catch (error) {
+      res.status(400).json({ msg: error.message });
+    }
+  },
+);
+
 // get all courses
 router.get("/course", async (req, res) => {
   try {
