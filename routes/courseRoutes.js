@@ -20,19 +20,35 @@ const upload = multer({ storage });
 // post a course
 router.post("/course", upload.single("thumbnail"), async (req, res) => {
   try {
-    const { title, description, price, language, duration } = req.body;
+    const { title, description, category, price, crossedPrice, language, duration } =
+      req.body;
 
-    if (!title || !description || !price || !duration) {
-      return res.status(400).json({ msg: "Required fields missing" });
+    if (!title || !description || !category || !price || !crossedPrice || !duration) {
+      return res.status(400).json({
+        msg: "Title, description, category, price, crossedPrice and duration are required",
+      });
+    }
+
+    const priceNum = Number(price);
+    const crossedPriceNum = Number(crossedPrice);
+
+    if (isNaN(priceNum) || isNaN(crossedPriceNum)) {
+      return res.status(400).json({ msg: "Price must be a number" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ msg: "Thumbnail is required" });
     }
 
     const newCourse = await Course.create({
-      title,
-      description,
-      price,
-      language,
-      duration,
-      thumbnail: req.file ? `/uploads/${req.file.filename}` : "No thumbnail provided",
+      title: title.trim(),
+      description: description.trim(),
+      category: category.trim(),
+      thumbnail: `/uploads/${req.file.filename}`,
+      price: priceNum,
+      crossedPrice: crossedPriceNum,
+      duration: duration.trim(),
+      language: language?.trim() || undefined,
       sections: [],
     });
 
@@ -54,6 +70,14 @@ router.post("/course/:courseId/section", async (req, res) => {
     const { title, order } = req.body;
 
     const course = await Course.findById(req.params.courseId);
+
+    if (!course) {
+      return res.status(404).json({ msg: "course not found" });
+    }
+
+    if (!title || !order) {
+      return res.status(404).json({ msg: "title and order are required" });
+    }
 
     course.sections.push({ title, order, lessons: [] });
 
