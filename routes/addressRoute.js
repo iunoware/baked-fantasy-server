@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post("/address", authMiddleware, async (req, res) => {
   try {
-    const { label, fullAddress, landmark, lat, lng, isDefault } = req.body;
+    const { label, fullAddress, landmark, building, lat, lng, isDefault } = req.body;
 
     let isActuallyDefault = isDefault;
     const count = await Address.countDocuments({ userId: req.user.id });
@@ -28,6 +28,7 @@ router.post("/address", authMiddleware, async (req, res) => {
       lat,
       lng,
       landmark,
+      building,
       isDefault: isActuallyDefault,
     });
 
