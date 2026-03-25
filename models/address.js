@@ -9,7 +9,6 @@ const addressSchema = new mongoose.Schema(
     },
     label: {
       type: String,
-      enum: ["Home", "Work", "Others"],
       default: "Home",
     },
     fullAddress: {
@@ -17,6 +16,9 @@ const addressSchema = new mongoose.Schema(
       required: true,
     },
     landmark: {
+      type: String,
+    },
+    building: {
       type: String,
     },
     lat: {

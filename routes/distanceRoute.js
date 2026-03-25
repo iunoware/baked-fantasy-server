@@ -1,71 +1,89 @@
 import express from "express";
-// import axios from "axios";
+import axios from "axios";
 
 const router = express.Router();
+
+function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c; // Distance in km
+  return Math.round(d * 1000); // Distance in meters
+}
 
 router.post("/distance", async (req, res) => {
   const { origin, destination } = req.body;
 
   try {
     if (!origin || !destination) {
-      return res.status(400).json({ error: "Missing origin or destination" });
+      return res.status(400).json({ success: false, error: "Missing origin or destination" });
+    }
+
+    if (
+      origin.lat === undefined ||
+      origin.lng === undefined ||
+      destination.lat === undefined ||
+      destination.lng === undefined
+    ) {
+      return res.status(400).json({ success: false, error: "Origin and destination must include lat and lng" });
     }
 
     const apiKey = process.env.GOOGLE_MAPS_API_KEY?.replace(/[\s,]+/g, "");
 
-    if (!apiKey) {
-      console.error("Missing GOOGLE_MAPS_API_KEY in environment variables");
-      return res.status(500).json({ error: "Server configuration error" });
+    if (apiKey) {
+      try {
+        const response = await axios.get(
+          "https://maps.googleapis.com/maps/api/distancematrix/json",
+          {
+            params: {
+              origins: `${origin.lat},${origin.lng}`,
+              destinations: `${destination.lat},${destination.lng}`,
+              key: apiKey,
+            },
+          }
+        );
+
+        if (response.data?.rows?.[0]?.elements?.[0]?.status === "OK") {
+          const element = response.data.rows[0].elements[0];
+          return res.json({
+            success: true,
+            distance: element.distance.value, // in meters
+            duration: element.duration.value, // in seconds
+          });
+        } else {
+          console.warn("Google API returned non-OK status, falling back to Haversine. Status:", response.data?.rows?.[0]?.elements?.[0]?.status);
+        }
+      } catch (apiError) {
+        console.error("Distance API error:", apiError?.response?.data || apiError.message);
+      }
+    } else {
+      console.warn("Missing GOOGLE_MAPS_API_KEY, falling back to manual Haversine calculation");
     }
 
-    const response = await axios.get(
-      "https://maps.googleapis.com/maps/api/distancematrix/json",
-      {
-        params: {
-          origins: `${origin.lat},${origin.lng}`,
-          destinations: `${destination.lat},${destination.lng}`,
-          key: apiKey,
-        },
-      },
+    // Fallback to Haversine
+    const distanceMeters = getDistanceFromLatLonInMeters(
+      parseFloat(origin.lat),
+      parseFloat(origin.lng),
+      parseFloat(destination.lat),
+      parseFloat(destination.lng)
     );
 
-    if (
-      !response.data ||
-      !response.data.rows ||
-      response.data.rows.length === 0
-    ) {
-      console.error("Google API raw response:", response.data);
-      return res.status(500).json({
-        error: "Invalid response from Distance Matrix API",
-        details: response.data,
-      });
-    }
-
-    const row = response.data.rows[0];
-    if (!row.elements || row.elements.length === 0) {
-      return res.status(500).json({ error: "No routes found" });
-    }
-
-    const element = row.elements[0];
-
-    if (element.status !== "OK") {
-      return res
-        .status(400)
-        .json({ error: `Distance not found: ${element.status}` });
-    }
-
-    res.json({
-      distanceValue: element.distance.value,
-      distanceText: element.distance.text,
-      durationText: element.duration.text,
-      durationValue: element.duration.value,
+    return res.json({
+      success: true,
+      distance: distanceMeters,
+      // No duration provided via Haversine
     });
+
   } catch (error) {
-    console.error(
-      "Distance API error:",
-      error?.response?.data || error.message,
-    );
-    res.status(500).json({ error: "Server error calculating distance" });
+    console.error("Distance calculation error:", error.message);
+    res.status(500).json({ success: false, error: "Server error calculating distance" });
   }
 });
 
