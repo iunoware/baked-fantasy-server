@@ -20,7 +20,7 @@ const courseSchema = new mongoose.Schema(
     description: { type: String, required: true },
     category: { type: String, required: true },
     thumbnail: { type: String, required: true },
-    price: { type: Number, required: true },
+    discountedPrice: { type: Number, required: true },
     crossedPrice: { type: Number, required: true },
     language: { type: String, default: "Tamil" },
     duration: { type: String, required: true },

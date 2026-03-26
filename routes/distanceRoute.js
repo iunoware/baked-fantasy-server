@@ -1,5 +1,5 @@
 import express from "express";
-import axios from "axios";
+// import axios from "axios";
 
 const router = express.Router();
 
@@ -23,7 +23,9 @@ router.post("/distance", async (req, res) => {
 
   try {
     if (!origin || !destination) {
-      return res.status(400).json({ success: false, error: "Missing origin or destination" });
+      return res
+        .status(400)
+        .json({ success: false, error: "Missing origin or destination" });
     }
 
     if (
@@ -32,7 +34,12 @@ router.post("/distance", async (req, res) => {
       destination.lat === undefined ||
       destination.lng === undefined
     ) {
-      return res.status(400).json({ success: false, error: "Origin and destination must include lat and lng" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          error: "Origin and destination must include lat and lng",
+        });
     }
 
     const apiKey = process.env.GOOGLE_MAPS_API_KEY?.replace(/[\s,]+/g, "");
@@ -47,7 +54,7 @@ router.post("/distance", async (req, res) => {
               destinations: `${destination.lat},${destination.lng}`,
               key: apiKey,
             },
-          }
+          },
         );
 
         if (response.data?.rows?.[0]?.elements?.[0]?.status === "OK") {
@@ -58,13 +65,21 @@ router.post("/distance", async (req, res) => {
             duration: element.duration.value, // in seconds
           });
         } else {
-          console.warn("Google API returned non-OK status, falling back to Haversine. Status:", response.data?.rows?.[0]?.elements?.[0]?.status);
+          console.warn(
+            "Google API returned non-OK status, falling back to Haversine. Status:",
+            response.data?.rows?.[0]?.elements?.[0]?.status,
+          );
         }
       } catch (apiError) {
-        console.error("Distance API error:", apiError?.response?.data || apiError.message);
+        console.error(
+          "Distance API error:",
+          apiError?.response?.data || apiError.message,
+        );
       }
     } else {
-      console.warn("Missing GOOGLE_MAPS_API_KEY, falling back to manual Haversine calculation");
+      console.warn(
+        "Missing GOOGLE_MAPS_API_KEY, falling back to manual Haversine calculation",
+      );
     }
 
     // Fallback to Haversine
@@ -72,7 +87,7 @@ router.post("/distance", async (req, res) => {
       parseFloat(origin.lat),
       parseFloat(origin.lng),
       parseFloat(destination.lat),
-      parseFloat(destination.lng)
+      parseFloat(destination.lng),
     );
 
     return res.json({
@@ -80,7 +95,6 @@ router.post("/distance", async (req, res) => {
       distance: distanceMeters,
       // No duration provided via Haversine
     });
-
   } catch (error) {
     console.error("Distance calculation error:", error.message);
     res.status(500).json({ success: false, error: "Server error calculating distance" });
