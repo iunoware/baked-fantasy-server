@@ -69,47 +69,7 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-// to POST an order
-// router.post("/orders", authMiddleware, async (req, res) => {
-//   console.log(req.body);
-//   try {
-//     if (!req.body) return res.status(400).json({ msg: "req.body is missing!" });
-
-//     const {
-//       // name,
-//       products = [],
-//       productType,
-//       shippingAddress,
-//       billingAddress,
-//     } = req.body;
-
-//     if (!Array.isArray(products) || products.length === 0) {
-//       return res.status(400).json({ msg: "products cna't be an empty array!" });
-//     }
-
-//     const normalized = products.map((p) => ({
-//       productId: p.productId,
-//       quantity: p.quantity,
-//       price: p.price,
-//     }));
-
-//     let totalPrice = normalized.reduce((sum, p) => sum + p.quantity * p.price, 0);
-
-//     const newOrder = await Order.create({
-//       userId: req.user._id,
-//       products: normalized,
-//       name: req.user.name,
-//       totalPrice,
-//       productType,
-//       shippingAddress,
-//       billingAddress,
-//     });
-//     res.json("success", newOrder);
-//   } catch (error) {
-//     res.status(400).json(error.message);
-//   }
-// });
-
+// POST orders
 router.post("/orders", authMiddleware, async (req, res) => {
   try {
     const { products = [], shippingAddress, billingAddress } = req.body;
@@ -180,7 +140,7 @@ router.post("/orders", authMiddleware, async (req, res) => {
   }
 });
 
-//to GET all orders
+// to GET all orders
 router.get("/orders", async (req, res) => {
   try {
     const orders = await Order.find();
