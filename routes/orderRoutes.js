@@ -63,6 +63,9 @@ const authMiddleware = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = await User.findById(decoded.id);
+
+    if (!req.user) return res.status(401).json({ msg: "User not found" });
+
     next();
   } catch (error) {
     res.status(401).json({ msg: "unauthorized", error: error.message });
@@ -70,6 +73,96 @@ const authMiddleware = async (req, res, next) => {
 };
 
 // POST orders
+// router.post("/orders", authMiddleware, async (req, res) => {
+//   try {
+//     const { products = [], shippingAddress, billingAddress } = req.body;
+
+//     if (!Array.isArray(products) || products.length === 0) {
+//       return res.status(400).json({ msg: "Products cannot be empty!" });
+//     }
+
+//     // Fetch product data from DB
+//     const normalizedProducts = await Promise.all(
+//       products.map(async (p) => {
+//         let product = await Product.findById(p.productId);
+
+//         if (!product) {
+//           product = await Essentials.findById(p.productId);
+//         }
+
+//         if (!product) {
+//           product = await Course.findById(p.productId);
+//         }
+
+//         if (!product) {
+//           throw new Error("Product not found");
+//         }
+
+//         return {
+//           productId: product._id,
+//           title: product.title,
+//           price: Number(product.discountedPrice),
+//           productType: product.productType,
+//           quantity: Number(p.quantity),
+//         };
+//       }),
+//     );
+
+//     // Calculate total price
+//     const totalPrice = normalizedProducts.reduce(
+//       (sum, p) => sum + p.price * p.quantity,
+//       0,
+//     );
+
+//     // Create order
+//     const newOrder = await Order.create({
+//       user: {
+//         userId: req.user._id,
+//         name: req.user.name,
+//         email: req.user.email,
+//         phone: req.user.mobileNumber,
+//       },
+
+//       products: normalizedProducts,
+
+//       shippingAddress,
+//       billingAddress,
+
+//       paymentStatus: "pending",
+//       orderStatus: "confirmed",
+
+//       totalPrice,
+//     });
+
+//     const courseProducts = normalizedProducts.filter((p) => p.productType === "Course");
+
+//     if (courseProducts.length > 0) {
+//       await User.findByIdAndUpdate(req.user._id, {
+//         $addToSet: {
+//           purchasedCourses: {
+//             // $each: courseProducts.map((course) => ({
+//             //   courseId: course.productId,
+//             //   purchasedAt: new Date(),
+//             // })),
+//             $each: courseProducts.map((id) => ({
+//               courseId: id,
+//               purchasedAt: new Date(),
+//             })),
+//           },
+//         },
+//       });
+//     }
+
+//     res.json({
+//       msg: "Order created successfully",
+//       order: newOrder,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+
+// New POST orders
 router.post("/orders", authMiddleware, async (req, res) => {
   try {
     const { products = [], shippingAddress, billingAddress } = req.body;
@@ -78,7 +171,6 @@ router.post("/orders", authMiddleware, async (req, res) => {
       return res.status(400).json({ msg: "Products cannot be empty!" });
     }
 
-    // Fetch product data from DB
     const normalizedProducts = await Promise.all(
       products.map(async (p) => {
         let product = await Product.findById(p.productId);
@@ -105,38 +197,58 @@ router.post("/orders", authMiddleware, async (req, res) => {
       }),
     );
 
-    // Calculate total price
     const totalPrice = normalizedProducts.reduce(
       (sum, p) => sum + p.price * p.quantity,
       0,
     );
 
-    // Create order
     const newOrder = await Order.create({
       user: {
         userId: req.user._id,
         name: req.user.name,
         email: req.user.email,
-        phone: req.user.phone,
+        phone: req.user.mobileNumber,
       },
-
       products: normalizedProducts,
-
       shippingAddress,
       billingAddress,
-
       paymentStatus: "pending",
       orderStatus: "confirmed",
-
       totalPrice,
     });
 
-    res.json({
+    const courseProducts = normalizedProducts.filter((p) => p.productType === "Course");
+
+    if (courseProducts.length > 0) {
+      const user = await User.findById(req.user._id);
+
+      const existingCourseIds = user.purchasedCourses.map((c) => c.courseId.toString());
+
+      const newCourses = courseProducts.filter(
+        (c) => !existingCourseIds.includes(c.productId.toString()),
+      );
+
+      if (newCourses.length > 0) {
+        user.purchasedCourses.push(
+          ...newCourses.map((course) => ({
+            courseId: course.productId,
+            purchasedAt: new Date(),
+          })),
+        );
+
+        await user.save();
+      }
+    }
+
+    res.status(201).json({
       msg: "Order created successfully",
       order: newOrder,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({
+      msg: "Something went wrong",
+      error: error.message,
+    });
   }
 });
 
@@ -349,8 +461,14 @@ router.get("/orders/today", async (req, res) => {
   try {
     const today = new Date();
 
-    const startOfDay = new Date(today.setUTCHours(0, 0, 0, 0));
-    const endOfDay = new Date(today.setUTCDate(23, 59, 59, 999));
+    // const startOfDay = new Date(today.setUTCHours(0, 0, 0, 0));
+    // const endOfDay = new Date(today.setUTCDate(23, 59, 59, 999));
+
+    const startOfDay = new Date();
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setUTCHours(23, 59, 59, 999);
 
     const sales = await Order.aggregate([
       {
