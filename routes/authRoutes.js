@@ -104,7 +104,11 @@ router.post("/register", async (req, res) => {
       purchasedCourses,
     });
 
-    res.json({ msg: "User registered successfully", user });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+
+    res.json({ msg: "User registered successfully", user, token });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

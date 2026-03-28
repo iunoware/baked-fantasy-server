@@ -12,11 +12,10 @@ const authMiddleware = async (req, res, next) => {
     }
 
     if (!token.startsWith("Bearer ")) {
-       console.log("❌ [Auth] Failed: Token is missing 'Bearer ' prefix");
-       // Keeping it flexible though
+       console.log("⚠️ [Auth] Warning: Token is missing 'Bearer ' prefix");
     }
 
-    const realToken = token.split(" ")[1];
+    const realToken = token.startsWith("Bearer ") ? token.split(" ")[1] : token;
     console.log("➡️ [Auth] Extracted realToken:", realToken);
 
     if (!realToken || realToken === "null") {
