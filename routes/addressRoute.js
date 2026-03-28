@@ -6,7 +6,8 @@ const router = express.Router();
 
 router.post("/address", authMiddleware, async (req, res) => {
   try {
-    const { label, fullAddress, landmark, building, lat, lng, isDefault } = req.body;
+    const { label, fullAddress, landmark, building, lat, lng, isDefault } =
+      req.body;
 
     let isActuallyDefault = isDefault;
     const count = await Address.countDocuments({ userId: req.user.id });
@@ -17,7 +18,7 @@ router.post("/address", authMiddleware, async (req, res) => {
     if (isActuallyDefault) {
       await Address.updateMany(
         { userId: req.user.id },
-        { $set: { isDefault: false } }
+        { $set: { isDefault: false } },
       );
     }
 
@@ -57,20 +58,56 @@ router.put("/address/:id/select", authMiddleware, async (req, res) => {
     const userId = req.user.id;
 
     // Reset all addresses to false
-    await Address.updateMany(
-      { userId },
-      { $set: { isDefault: false } }
-    );
+    await Address.updateMany({ userId }, { $set: { isDefault: false } });
 
     // Set the selected one to true
     await Address.findOneAndUpdate(
       { _id: id, userId },
       { $set: { isDefault: true } },
-      { new: true }
+      { new: true },
     );
 
     // Return the cleanly updated full list, sorting default to the top
-    const updatedAddresses = await Address.find({ userId }).sort({ isDefault: -1, createdAt: -1 });
+    const updatedAddresses = await Address.find({ userId }).sort({
+      isDefault: -1,
+      createdAt: -1,
+    });
+    res.json(updatedAddresses);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.delete("/address/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const address = await Address.findOne({ _id: id, userId });
+
+    if (!address) {
+      return res.status(404).json({ message: "Address not found" });
+    }
+
+    const wasDefault = address.isDefault;
+
+    await Address.deleteOne({ _id: id, userId });
+
+    if (wasDefault) {
+      const nextAddress = await Address.findOne({ userId }).sort({
+        createdAt: -1,
+      });
+
+      if (nextAddress) {
+        ((nextAddress.isDefault = true), await nextAddress.save());
+      }
+    }
+
+    const updatedAddresses = await Address.find({ userId }).sort({
+      isDefault: -1,
+      createdAt: -1,
+    });
     res.json(updatedAddresses);
   } catch (error) {
     console.error(error);
