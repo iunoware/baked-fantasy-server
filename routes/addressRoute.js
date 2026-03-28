@@ -10,20 +10,20 @@ router.post("/address", authMiddleware, async (req, res) => {
       req.body;
 
     let isActuallyDefault = isDefault;
-    const count = await Address.countDocuments({ userId: req.user.id });
+    const count = await Address.countDocuments({ userId: req.user._id });
     if (count === 0) {
       isActuallyDefault = true; // First address added automatically becomes default
     }
 
     if (isActuallyDefault) {
       await Address.updateMany(
-        { userId: req.user.id },
+        { userId: req.user._id },
         { $set: { isDefault: false } },
       );
     }
 
     const address = await Address.create({
-      userId: req.user.id,
+      userId: req.user._id,
       label,
       fullAddress,
       lat,
@@ -42,7 +42,7 @@ router.post("/address", authMiddleware, async (req, res) => {
 
 router.get("/address", authMiddleware, async (req, res) => {
   try {
-    const address = await Address.find({ userId: req.user.id }).sort({
+    const address = await Address.find({ userId: req.user._id }).sort({
       isDefault: -1, // Sort so default is at position 0
       createdAt: -1,
     });
@@ -55,7 +55,7 @@ router.get("/address", authMiddleware, async (req, res) => {
 router.put("/address/:id/select", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     // Reset all addresses to false
     await Address.updateMany({ userId }, { $set: { isDefault: false } });
@@ -82,7 +82,7 @@ router.put("/address/:id/select", authMiddleware, async (req, res) => {
 router.delete("/address/:id", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     const address = await Address.findOne({ _id: id, userId });
 
