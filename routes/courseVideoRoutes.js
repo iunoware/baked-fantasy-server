@@ -1,3 +1,5 @@
+// the courseVideoRoutes.js is now useless
+
 import CourseVideo from "../models/courseVideos.js";
 import express from "express";
 import multer from "multer";
@@ -145,7 +147,7 @@ router.post(
     } catch (error) {
       res.status(400).json({ msg: "something went wrong", error: error.message });
     }
-  }
+  },
 );
 
 // GET
@@ -208,7 +210,7 @@ router.patch(
     } catch (error) {
       res.status(400).json({ msg: "something went wrong", error: error.message });
     }
-  }
+  },
 );
 
 // DELETE
