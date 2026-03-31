@@ -23,11 +23,11 @@ const addressSchema = new mongoose.Schema(
     },
     lat: {
       type: Number,
-      required: true,
+      default: null,
     },
     lng: {
       type: Number,
-      required: true,
+      default: null,
     },
     isDefault: {
       type: Boolean,

@@ -52,6 +52,32 @@ router.get("/address", authMiddleware, async (req, res) => {
   }
 });
 
+router.put("/address/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { label, fullAddress, landmark, building, lat, lng } = req.body;
+    
+    const address = await Address.findOneAndUpdate(
+      { _id: id, userId: req.user._id },
+      { $set: { label, fullAddress, landmark, building, lat, lng } },
+      { new: true }
+    );
+
+    if (!address) {
+      return res.status(404).json({ message: "Address not found" });
+    }
+
+    const updatedAddresses = await Address.find({ userId: req.user._id }).sort({
+      isDefault: -1,
+      createdAt: -1,
+    });
+    res.json(updatedAddresses);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.put("/address/:id/select", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
