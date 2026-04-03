@@ -60,68 +60,73 @@ function authenticateToken(req, res, next) {
 }
 
 // post a course
-router.post("/course", upload.single("thumbnail"), async (req, res) => {
-  try {
-    const {
-      title,
-      description,
-      category,
-      discountedPrice,
-      originalPrice,
-      language,
-      duration,
-    } = req.body;
+router.post(
+  "/course",
+  authenticateToken,
+  upload.single("thumbnail"),
+  async (req, res) => {
+    try {
+      const {
+        title,
+        description,
+        category,
+        discountedPrice,
+        originalPrice,
+        language,
+        duration,
+      } = req.body;
 
-    if (
-      !title ||
-      !description ||
-      !category ||
-      !discountedPrice ||
-      !originalPrice ||
-      !duration
-    ) {
-      return res.status(400).json({
-        msg: "Title, description, category, discounted price, original price and duration are required",
+      if (
+        !title ||
+        !description ||
+        !category ||
+        !discountedPrice ||
+        !originalPrice ||
+        !duration
+      ) {
+        return res.status(400).json({
+          msg: "Title, description, category, discounted price, original price and duration are required",
+        });
+      }
+
+      const discountedPriceNum = Number(discountedPrice);
+      const originalPriceNum = Number(originalPrice);
+
+      if (isNaN(discountedPriceNum) || isNaN(originalPriceNum)) {
+        return res.status(400).json({ msg: "Price must be a number" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ msg: "Thumbnail is required" });
+      }
+
+      const newCourse = await Course.create({
+        title: title.trim(),
+        description: description.trim(),
+        category: category.trim(),
+        thumbnail: `/uploads/${req.file.filename}`,
+        discountedPrice: discountedPriceNum,
+        originalPrice: originalPriceNum,
+        duration: duration.trim(),
+        language: language?.trim() || undefined,
+        sections: [],
+      });
+
+      res.status(201).json({
+        msg: "Course created successfully",
+        course: newCourse,
+      });
+    } catch (error) {
+      res.status(500).json({
+        msg: "Failed to create course",
+        error: error.message,
       });
     }
-
-    const discountedPriceNum = Number(discountedPrice);
-    const originalPriceNum = Number(originalPrice);
-
-    if (isNaN(discountedPriceNum) || isNaN(originalPriceNum)) {
-      return res.status(400).json({ msg: "Price must be a number" });
-    }
-
-    if (!req.file) {
-      return res.status(400).json({ msg: "Thumbnail is required" });
-    }
-
-    const newCourse = await Course.create({
-      title: title.trim(),
-      description: description.trim(),
-      category: category.trim(),
-      thumbnail: `/uploads/${req.file.filename}`,
-      discountedPrice: discountedPriceNum,
-      originalPrice: originalPriceNum,
-      duration: duration.trim(),
-      language: language?.trim() || undefined,
-      sections: [],
-    });
-
-    res.status(201).json({
-      msg: "Course created successfully",
-      course: newCourse,
-    });
-  } catch (error) {
-    res.status(500).json({
-      msg: "Failed to create course",
-      error: error.message,
-    });
-  }
-});
+  },
+);
 
 // post sections
-router.post("/course/:courseId/section", async (req, res) => {
+router.post("/course/:courseId/section", authenticateToken, async (req, res) => {
   try {
     const { title, order } = req.body;
 
@@ -149,6 +154,7 @@ router.post("/course/:courseId/section", async (req, res) => {
 // add videos
 router.post(
   "/course/:courseId/section/:sectionId/lesson",
+  authenticateToken,
   upload.fields([
     { name: "video", maxCount: 1 },
     { name: "pdf", maxCount: 1 },
@@ -339,55 +345,193 @@ router.get("/course/:courseId", async (req, res) => {
   }
 });
 
-// patch a course
-router.patch("/course/:courseId", upload.single("thumbnail"), async (req, res) => {
-  try {
-    const updates = { ...req.body };
+// old PATCH
+// router.patch("/course/:courseId", upload.single("thumbnail"), async (req, res) => {
+//   try {
+//     const updates = { ...req.body };
 
-    // thumbnail
-    if (req.file) {
-      updates.thumbnail = `/uploads/${req.file.filename}`;
+//     // thumbnail
+//     if (req.file) {
+//       updates.thumbnail = `/uploads/${req.file.filename}`;
+//     }
+
+//     const updatedCourse = await Course.findByIdAndUpdate(req.params.courseId, updates, {
+//       new: true,
+//       runValidators: true,
+//     });
+
+//     if (!updatedCourse) {
+//       return res.status(404).json({ msg: "Course not found" });
+//     }
+
+//     res.json({
+//       msg: "Course updated successfully",
+//       course: updatedCourse,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       msg: "Failed to update course",
+//       error: error.message,
+//     });
+//   }
+// });
+
+// new PATCH for course (1st one)
+router.patch(
+  "/course/:courseId",
+  authenticateToken,
+  upload.single("thumbnail"),
+  async (req, res) => {
+    try {
+      const {
+        title,
+        description,
+        category,
+        discountedPrice,
+        originalPrice,
+        language,
+        duration,
+      } = req.body;
+
+      const updates = {};
+
+      if (title) updates.title = title.trim();
+      if (description) updates.description = description.trim();
+      if (category) updates.category = category.trim();
+      if (language) updates.language = language.trim();
+      if (duration) updates.duration = duration.trim();
+      if (originalPrice) updates.originalPrice = Number(originalPrice);
+      if (discountedPrice) updates.discountedPrice = Number(discountedPrice);
+      if (req.file) updates.thumbnail = `/uploads/${req.file.filename}`;
+
+      const updatedCourse = await Course.findByIdAndUpdate(req.params.courseId, updates, {
+        new: true,
+        runValidators: true,
+      });
+
+      if (!updatedCourse) return res.status(404).json({ msg: "Course not found" });
+
+      res.json({ msg: "Course updated successfully", course: updatedCourse });
+    } catch (error) {
+      res.status(500).json({ msg: "Failed to update course", error: error.message });
     }
+  },
+);
 
-    const updatedCourse = await Course.findByIdAndUpdate(req.params.courseId, updates, {
-      new: true,
-      runValidators: true,
-    });
+// new PATCH for section (2nd one)
+router.patch(
+  "/course/:courseId/section/:sectionId",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { title, order } = req.body;
+      const course = await Course.findById(req.params.courseId);
+      if (!course) return res.status(404).json({ msg: "Course not found" });
 
-    if (!updatedCourse) {
-      return res.status(404).json({ msg: "Course not found" });
+      const section = course.sections.id(req.params.sectionId);
+      if (!section) return res.status(404).json({ msg: "Section not found" });
+
+      if (title) section.title = title.trim();
+      if (order !== undefined) section.order = order;
+
+      await course.save();
+      res.json({ msg: "Section updated", course });
+    } catch (error) {
+      res.status(500).json({ msg: error.message });
     }
+  },
+);
 
-    res.json({
-      msg: "Course updated successfully",
-      course: updatedCourse,
-    });
-  } catch (error) {
-    res.status(500).json({
-      msg: "Failed to update course",
-      error: error.message,
-    });
-  }
-});
+// new PATCH for lesson (3rd one)
+router.patch(
+  "/course/:courseId/section/:sectionId/lesson/:lessonId",
+  authenticateToken,
+  upload.fields([
+    { name: "video", maxCount: 1 },
+    { name: "pdf", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const { title, duration, order } = req.body;
+      const course = await Course.findById(req.params.courseId);
+      if (!course) return res.status(404).json({ msg: "Course not found" });
+
+      const section = course.sections.id(req.params.sectionId);
+      if (!section) return res.status(404).json({ msg: "Section not found" });
+
+      const lesson = section.lessons.id(req.params.lessonId);
+      if (!lesson) return res.status(404).json({ msg: "Lesson not found" });
+
+      if (title) lesson.title = title.trim();
+      if (duration) lesson.duration = duration.trim();
+      if (order !== undefined) lesson.order = Number(order);
+      if (req.files?.video?.[0]) lesson.videoUrl = req.files.video[0].filename;
+      if (req.files?.pdf?.[0]) lesson.pdfUrl = req.files.pdf[0].filename;
+
+      await course.save();
+      res.json({ msg: "Lesson updated", course });
+    } catch (error) {
+      res.status(500).json({ msg: error.message });
+    }
+  },
+);
 
 // delete a course
-router.delete("/course/:courseId", async (req, res) => {
+router.delete("/course/:courseId", authenticateToken, async (req, res) => {
   try {
     const deletedCourse = await Course.findByIdAndDelete(req.params.courseId);
 
-    if (!deletedCourse) {
-      return res.status(404).json({ msg: "Course not found" });
-    }
+    if (!deletedCourse) return res.status(404).json({ msg: "Course not found" });
 
-    res.json({
-      msg: "Course deleted successfully",
-    });
+    res.json({ msg: "Course deleted successfully" });
   } catch (error) {
-    res.status(500).json({
-      msg: "Failed to delete course",
-      error: error.message,
-    });
+    res.status(500).json({ msg: "Failed to delete course", error: error.message });
   }
 });
+
+// delete a section
+router.delete(
+  "/course/:courseId/section/:sectionId",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const course = await Course.findById(req.params.courseId);
+      if (!course) return res.status(404).json({ msg: "Course not found" });
+
+      const section = course.sections.id(req.params.sectionId);
+      if (!section) return res.status(404).json({ msg: "Section not found" });
+
+      section.deleteOne();
+      await course.save();
+      res.json({ msg: "Section deleted", course });
+    } catch (error) {
+      res.status(500).json({ msg: error.message });
+    }
+  },
+);
+
+// delete a lesson
+router.delete(
+  "/course/:courseId/section/:sectionId/lesson/:lessonId",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const course = await Course.findById(req.params.courseId);
+      if (!course) return res.status(404).json({ msg: "Course not found" });
+
+      const section = course.sections.id(req.params.sectionId);
+      if (!section) return res.status(404).json({ msg: "Section not found" });
+
+      const lesson = section.lessons.id(req.params.lessonId);
+      if (!lesson) return res.status(404).json({ msg: "Lesson not found" });
+
+      lesson.deleteOne();
+      await course.save();
+      res.json({ msg: "Lesson deleted", course });
+    } catch (error) {
+      res.status(500).json({ msg: error.message });
+    }
+  },
+);
 
 export default router;
