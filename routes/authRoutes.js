@@ -136,32 +136,23 @@ router.post("/login", async (req, res) => {
 });
 
 // for modifing user details
-// router.patch("/update-profile", async (req, res) => {
-//   try {
-//     const { name, email, mobileNumber } = req.body;
+router.patch("/update-profile", async (req, res) => {
+  try {
+    const { name, email, mobileNumber, address } = req.body;
 
-//     const userExists = await User.findOne({ email });
-//     if (userExists) return res.status(400).json({ msg: "User already exists" });
+    const user = await User.findOneAndUpdate(
+      { email: email },
+      { $set: { name, mobileNumber, address } },
+      { new: true },
+    );
 
-//     const hashedPassword = await bcrypt.hash(password, 10);
+    if (!user) return res.status(404).json({ msg: "User not found" });
 
-//     const user = await User.create({
-//       name,
-//       email,
-//       mobileNumber,
-//       password: hashedPassword,
-//       purchasedCourses,
-//     });
-
-//     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-//       expiresIn: "1d",
-//     });
-
-//     res.json({ msg: "User registered successfully", user, token });
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// });
+    res.json({ msg: "Profile updated successfully", user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.post("/send-otp", async (req, res) => {
   try {
