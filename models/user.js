@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String },
   mobileNumber: { type: Number, default: null },
   role: { type: String }, //new code
+  address: { type: String, default: "" },
   provider: {
     type: String,
     default: "local",
