@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 import Cart from "../models/cart.js";
 import User from "../models/user.js"; // make sure this exists
 
-
 const router = express.Router();
 
 // async function verifyAdmin(req, res, next) {
@@ -41,7 +40,9 @@ router.post("/cart", async (req, res) => {
     let cart = await Cart.findOne({ userId });
 
     if (cart) {
-      const itemIndex = cart.items.findIndex((i) => i.productId.toString() === productId);
+      const itemIndex = cart.items.findIndex(
+        (i) => i.productId.toString() === productId,
+      );
       if (itemIndex > -1) {
         cart.items[itemIndex].quantity += quantity;
       } else {
@@ -93,13 +94,13 @@ router.put("/cart", async (req, res) => {
       // If cart doesn't exist, create it (upsert behavior)
       cart = await Cart.create({
         userId,
-        items: [{ productId, quantity: Number(quantity) }]
+        items: [{ productId, quantity: Number(quantity) }],
       });
       return res.json({ message: "Cart created and updated", cart });
     }
 
     const itemIndex = cart.items.findIndex(
-      (i) => i.productId.toString() === productId
+      (i) => i.productId.toString() === productId,
     );
 
     if (itemIndex > -1) {
@@ -114,7 +115,9 @@ router.put("/cart", async (req, res) => {
     res.json({ message: "Cart updated successfully", cart });
   } catch (error) {
     console.error("PUT /cart error:", error);
-    res.status(500).json({ msg: "Failed to update cart", error: error.message });
+    res
+      .status(500)
+      .json({ msg: "Failed to update cart", error: error.message });
   }
 });
 
@@ -131,6 +134,54 @@ router.delete("/cart", async (req, res) => {
     res.json({ message: "Item removed", cart });
   } catch (error) {
     res.status(500).json({ msg: error.message });
+  }
+});
+
+// 🔄 Sync guest cart with user cart (Bulk Update)
+router.post("/cart/sync", async (req, res) => {
+  try {
+    const { userId, items } = req.body;
+
+    if (!userId || !Array.isArray(items)) {
+      return res
+        .status(400)
+        .json({ msg: "userId and items array are required" });
+    }
+
+    let cart = await Cart.findOne({ userId });
+
+    if (!cart) {
+      cart = new Cart({ userId, items: [] });
+    }
+
+    items.forEach((guestItem) => {
+      const itemIndex = cart.items.findIndex(
+        (i) => i.productId.toString() === guestItem.productId,
+      );
+      if (itemIndex > -1) {
+        // If it exists, we add quantities together or just update to the guest value?
+        // Usually, addition is better for a "merge" experience.
+        cart.items[itemIndex].quantity += guestItem.quantity;
+      } else {
+        // New item from guest cart
+        cart.items.push({
+          productId: guestItem.productId,
+          quantity: guestItem.quantity,
+        });
+      }
+    });
+
+    await cart.save();
+    // Return the updated cart populated with product details
+    const updatedCart = await Cart.findOne({ userId }).populate(
+      "items.productId",
+    );
+    res
+      .status(200)
+      .json({ message: "Cart synced successfully", cart: updatedCart });
+  } catch (error) {
+    console.error("POST /cart/sync error:", error);
+    res.status(500).json({ msg: "Failed to sync cart", error: error.message });
   }
 });
 
