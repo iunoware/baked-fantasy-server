@@ -467,6 +467,7 @@ router.patch(
       if (order !== undefined) lesson.order = Number(order);
       if (req.files?.video?.[0]) lesson.videoUrl = req.files.video[0].filename;
       if (req.files?.pdf?.[0]) lesson.pdfUrl = req.files.pdf[0].filename;
+      if (req.body.removePdf === "true") lesson.pdfUrl = null;
 
       await course.save();
       res.json({ msg: "Lesson updated", course });
