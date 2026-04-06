@@ -467,6 +467,7 @@ router.patch(
       if (order !== undefined) lesson.order = Number(order);
       if (req.files?.video?.[0]) lesson.videoUrl = req.files.video[0].filename;
       if (req.files?.pdf?.[0]) lesson.pdfUrl = req.files.pdf[0].filename;
+      if (req.body.removePdf === "true") lesson.pdfUrl = null;
 
       await course.save();
       res.json({ msg: "Lesson updated", course });
@@ -477,11 +478,40 @@ router.patch(
 );
 
 // delete a course
+// router.delete("/course/:courseId", authenticateToken, async (req, res) => {
+//   try {
+//     const deletedCourse = await Course.findByIdAndDelete(req.params.courseId);
+
+//     if (!deletedCourse) return res.status(404).json({ msg: "Course not found" });
+
+//     res.json({ msg: "Course deleted successfully" });
+//   } catch (error) {
+//     res.status(500).json({ msg: "Failed to delete course", error: error.message });
+//   }
+// });
 router.delete("/course/:courseId", authenticateToken, async (req, res) => {
   try {
-    const deletedCourse = await Course.findByIdAndDelete(req.params.courseId);
+    const course = await Course.findById(req.params.courseId);
+    if (!course) return res.status(404).json({ msg: "Course not found" });
 
-    if (!deletedCourse) return res.status(404).json({ msg: "Course not found" });
+    // Delete all associated files
+    const filesToDelete = [];
+
+    if (course.thumbnail) filesToDelete.push(course.thumbnail.replace("/uploads/", ""));
+
+    course.sections.forEach((section) => {
+      section.lessons.forEach((lesson) => {
+        if (lesson.videoUrl) filesToDelete.push(lesson.videoUrl);
+        if (lesson.pdfUrl) filesToDelete.push(lesson.pdfUrl);
+      });
+    });
+
+    filesToDelete.forEach((filename) => {
+      const filePath = path.join(process.cwd(), "uploads", filename);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    });
+
+    await Course.findByIdAndDelete(req.params.courseId);
 
     res.json({ msg: "Course deleted successfully" });
   } catch (error) {
