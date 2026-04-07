@@ -1,5 +1,14 @@
 import mongoose from "mongoose";
 
+const reviewSchema = new mongoose.Schema(
+  {
+    student: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    rating: { type: Number, required: true, min: 1, max: 5 },
+    comment: { type: String, default: "" },
+  },
+  { timestamps: true },
+);
+
 const lessonSchema = new mongoose.Schema({
   title: { type: String, required: true },
   videoUrl: { type: String, required: true },
@@ -29,6 +38,7 @@ const courseSchema = new mongoose.Schema(
     ratingSum: { type: Number, default: 0 },
     totalStudents: { type: Number, default: 0 },
     productType: { type: String, enum: ["Course"], default: "Course" },
+    reviews: [reviewSchema], // 👈 add this line at the end, before sections or after, doesn't matter
     sections: [sectionSchema],
   },
   {
