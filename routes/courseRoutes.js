@@ -59,7 +59,7 @@ function authenticateToken(req, res, next) {
   }
 }
 
-// post a course
+// POST a course
 router.post(
   "/course",
   authenticateToken,
@@ -125,7 +125,7 @@ router.post(
   },
 );
 
-// post sections
+// POST sections
 router.post("/course/:courseId/section", authenticateToken, async (req, res) => {
   try {
     const { title, order } = req.body;
@@ -196,6 +196,36 @@ router.post(
     }
   },
 );
+
+// POST add a review
+router.post("/course/:courseId/review", authenticateToken, async (req, res) => {
+  try {
+    const { rating, comment } = req.body;
+    const studentId = req.user.id;
+
+    if (!rating || rating < 1 || rating > 5)
+      return res.status(400).json({ msg: "Rating must be between 1 and 5" });
+
+    const course = await Course.findById(req.params.courseId);
+    if (!course) return res.status(404).json({ msg: "Course not found" });
+
+    const alreadyReviewed = course.reviews.find(
+      (r) => r.student.toString() === studentId,
+    );
+    if (alreadyReviewed)
+      return res.status(400).json({ msg: "You have already reviewed this course" });
+
+    course.reviews.push({ student: studentId, rating, comment: comment?.trim() || "" });
+    course.ratingSum += rating;
+    course.totalReviews += 1;
+    course.rating = parseFloat((course.ratingSum / course.totalReviews).toFixed(1));
+
+    await course.save();
+    res.status(201).json({ msg: "Review added", course });
+  } catch (err) {
+    res.status(500).json({ msg: err.message });
+  }
+});
 
 // video security
 // router.get("/video/:filename", async (req, res) => {
@@ -477,6 +507,42 @@ router.patch(
   },
 );
 
+// PATCH edit own review
+router.patch(
+  "/course/:courseId/review/:reviewId",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const { rating, comment } = req.body;
+      const studentId = req.user.id;
+
+      if (rating && (rating < 1 || rating > 5))
+        return res.status(400).json({ msg: "Rating must be between 1 and 5" });
+
+      const course = await Course.findById(req.params.courseId);
+      if (!course) return res.status(404).json({ msg: "Course not found" });
+
+      const review = course.reviews.id(req.params.reviewId);
+      if (!review) return res.status(404).json({ msg: "Review not found" });
+
+      if (review.student.toString() !== studentId)
+        return res.status(403).json({ msg: "Not your review" });
+
+      if (rating) {
+        course.ratingSum = course.ratingSum - review.rating + rating;
+        course.rating = parseFloat((course.ratingSum / course.totalReviews).toFixed(1));
+        review.rating = rating;
+      }
+      if (comment !== undefined) review.comment = comment.trim();
+
+      await course.save();
+      res.json({ msg: "Review updated", course });
+    } catch (err) {
+      res.status(500).json({ msg: err.message });
+    }
+  },
+);
+
 // delete a course
 // router.delete("/course/:courseId", authenticateToken, async (req, res) => {
 //   try {
@@ -560,6 +626,39 @@ router.delete(
       res.json({ msg: "Lesson deleted", course });
     } catch (error) {
       res.status(500).json({ msg: error.message });
+    }
+  },
+);
+
+// DELETE delete own review
+router.delete(
+  "/course/:courseId/review/:reviewId",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const studentId = req.user.id;
+
+      const course = await Course.findById(req.params.courseId);
+      if (!course) return res.status(404).json({ msg: "Course not found" });
+
+      const review = course.reviews.id(req.params.reviewId);
+      if (!review) return res.status(404).json({ msg: "Review not found" });
+
+      if (review.student.toString() !== studentId)
+        return res.status(403).json({ msg: "Not your review" });
+
+      course.ratingSum -= review.rating;
+      course.totalReviews -= 1;
+      course.rating =
+        course.totalReviews > 0
+          ? parseFloat((course.ratingSum / course.totalReviews).toFixed(1))
+          : 0;
+
+      review.deleteOne();
+      await course.save();
+      res.json({ msg: "Review deleted", course });
+    } catch (err) {
+      res.status(500).json({ msg: err.message });
     }
   },
 );
