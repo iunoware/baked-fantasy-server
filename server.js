@@ -91,6 +91,8 @@ async function verifyUser(req, res, next) {
   }
 }
 
+// Removed redundant protected uploads route to allow public access and consistent fallbacks
+/*
 app.get("/uploads/:fileName", verifyUser, (req, res) => {
   const fileName = req.params.fileName;
   const options = {
@@ -103,6 +105,7 @@ app.get("/uploads/:fileName", verifyUser, (req, res) => {
     }
   });
 });
+*/
 
 app.use((err, req, res, next) => {
   console.error("Server Error:", err);

@@ -31,12 +31,13 @@ const router = express.Router();
 // ✅ Add item to cart
 router.post("/cart", async (req, res) => {
   try {
-    const { userId, productId, quantity } = req.body;
-
+    const { userId, productId, quantity, onModel } = req.body;
+ 
     if (!userId || !productId) {
       return res.status(400).json({ msg: "userId and productId are required" });
     }
-
+ 
+    const modelToUse = onModel || "Product";
     let cart = await Cart.findOne({ userId });
 
     if (cart) {
@@ -45,12 +46,16 @@ router.post("/cart", async (req, res) => {
       );
       if (itemIndex > -1) {
         cart.items[itemIndex].quantity += quantity;
+        cart.items[itemIndex].onModel = modelToUse;
       } else {
-        cart.items.push({ productId, quantity });
+        cart.items.push({ productId, quantity, onModel: modelToUse });
       }
       await cart.save();
     } else {
-      cart = await Cart.create({ userId, items: [{ productId, quantity }] });
+      cart = await Cart.create({
+        userId,
+        items: [{ productId, quantity, onModel: modelToUse }],
+      });
     }
 
     res.status(200).json({ message: "Added to cart", cart });
@@ -82,12 +87,13 @@ router.get("/cart/:userId", async (req, res) => {
 // Update quantity of a product in cart
 router.put("/cart", async (req, res) => {
   try {
-    const { userId, productId, quantity } = req.body;
-
+    const { userId, productId, quantity, onModel } = req.body;
+ 
     if (!userId || !productId) {
       return res.status(400).json({ msg: "userId and productId are required" });
     }
-
+ 
+    const modelToUse = onModel || "Product";
     let cart = await Cart.findOne({ userId });
 
     if (!cart) {
@@ -106,11 +112,16 @@ router.put("/cart", async (req, res) => {
     if (itemIndex > -1) {
       // Update existing item
       cart.items[itemIndex].quantity = Number(quantity);
+      cart.items[itemIndex].onModel = modelToUse;
     } else {
       // Add new item to existing cart
-      cart.items.push({ productId, quantity: Number(quantity) });
+      cart.items.push({
+        productId,
+        quantity: Number(quantity),
+        onModel: modelToUse,
+      });
     }
-
+ 
     await cart.save();
     res.json({ message: "Cart updated successfully", cart });
   } catch (error) {
@@ -158,15 +169,16 @@ router.post("/cart/sync", async (req, res) => {
       const itemIndex = cart.items.findIndex(
         (i) => i.productId.toString() === guestItem.productId,
       );
+      const modelToUse = guestItem.onModel || "Product";
+ 
       if (itemIndex > -1) {
-        // If it exists, we add quantities together or just update to the guest value?
-        // Usually, addition is better for a "merge" experience.
         cart.items[itemIndex].quantity += guestItem.quantity;
+        cart.items[itemIndex].onModel = modelToUse;
       } else {
-        // New item from guest cart
         cart.items.push({
           productId: guestItem.productId,
           quantity: guestItem.quantity,
+          onModel: modelToUse,
         });
       }
     });

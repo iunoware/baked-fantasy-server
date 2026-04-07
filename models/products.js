@@ -8,7 +8,11 @@ const productSchema = new mongoose.Schema(
     subject: { type: String },
     description: { type: String },
     info: { type: String },
-    // productType: { type: String, enum: ["Essential", "Cake", "Course"], required: true },
+    deliveryType: {
+      type: String,
+      enum: ["local", "pickup", "national"],
+      required: true,
+    },
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
