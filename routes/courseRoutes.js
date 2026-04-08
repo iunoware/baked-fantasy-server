@@ -360,7 +360,10 @@ router.get("/course", async (req, res) => {
 // get a single course
 router.get("/course/:courseId", async (req, res) => {
   try {
-    const course = await Course.findById(req.params.courseId);
+    const course = await Course.findById(req.params.courseId).populate(
+      "reviews.student",
+      "name email",
+    );
 
     if (!course) {
       return res.status(404).json({ msg: "Course not found" });
