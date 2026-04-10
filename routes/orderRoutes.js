@@ -217,16 +217,12 @@ router.post("/orders", authMiddleware, async (req, res) => {
       totalPrice,
     });
 
-    const courseProducts = normalizedProducts.filter(
-      (p) => p.productType === "Course",
-    );
+    const courseProducts = normalizedProducts.filter((p) => p.productType === "Course");
 
     if (courseProducts.length > 0) {
       const user = await User.findById(req.user._id);
 
-      const existingCourseIds = user.purchasedCourses.map((c) =>
-        c.courseId.toString(),
-      );
+      const existingCourseIds = user.purchasedCourses.map((c) => c.courseId.toString());
 
       const newCourses = courseProducts.filter(
         (c) => !existingCourseIds.includes(c.productId.toString()),
@@ -503,48 +499,14 @@ router.get("/orders/today", async (req, res) => {
       if (item._id === "Course") result.courseSales = item.total;
     });
 
-    const totalOrders =
-      result.essentialSales + result.cakeSales + result.courseSales;
+    const totalOrders = result.essentialSales + result.cakeSales + result.courseSales;
 
-    res.json({
+    res.status(200).json({
       ...result,
       totalOrders,
     });
 
-    // const totalOrdersToday = await Order.countDocuments({
-    //   createdAt: { $gte: startOfDay, $lte: endOfDay },
-    // });
-
-    // const [essentialSales, cakeSales, courseSales] = await Promise.all([
-    //   Order.countDocuments({
-    //     // productType: "essential",
-    //     "products.productType": "Essential",
-    //     createdAt: { $gte: startOfDay, $lte: endOfDay },
-    //   }),
-    //   Order.countDocuments({
-    //     // productType: "cake",
-    //     "products.productType": "Cake",
-    //     createdAt: { $gte: startOfDay, $lte: endOfDay },
-    //   }),
-    //   Order.countDocuments({
-    //     // productType: "course",
-    //     "products.productType": "Course",
-    //     createdAt: { $gte: startOfDay, $lte: endOfDay },
-    //   }),
-    // ]);
-
-    // const totalOrders = essentialSales + cakeSales + courseSales;
-
-    // res.status(200).json({
-    //   essentialSales: essentialSales,
-    //   cakeSales: cakeSales,
-    //   courseSales: courseSales,
-    //   totalOrders: totalOrders,
-    // });
-
-    // console.log("orders today: ", totalOrdersToday);
-
-    res.status(200).json({ totalOrdersToday });
+    // res.status(200).json({ totalOrdersToday });
   } catch (error) {
     res.status(500).json({ msg: "something went wrong", error: error.message });
   }
@@ -613,41 +575,12 @@ router.get("/orders/thisWeek", async (req, res) => {
       if (item._id === "Course") result.courseSales = item.total;
     });
 
-    const totalOrders =
-      result.essentialSales + result.cakeSales + result.courseSales;
+    const totalOrders = result.essentialSales + result.cakeSales + result.courseSales;
 
     res.json({
       ...result,
       totalOrders,
     });
-
-    // all these promise run in parallel
-    // const [essentialSales, cakeSales, courseSales] = await Promise.all([
-    //   Order.countDocuments({
-    //     // productType: "essential",
-    //     "products.productType": "Essential",
-    //     createdAt: { $gte: start, $lte: end },
-    //   }),
-    //   Order.countDocuments({
-    //     // productType: "cake",
-    //     "products.productType": "Cake",
-    //     createdAt: { $gte: start, $lte: end },
-    //   }),
-    //   Order.countDocuments({
-    //     // productType: "course",
-    //     "products.productType": "Course",
-    //     createdAt: { $gte: start, $lte: end },
-    //   }),
-    // ]);
-
-    // const totalOrders = essentialSales + cakeSales + courseSales;
-
-    // res.status(200).json({
-    //   essentialSales: essentialSales,
-    //   cakeSales: cakeSales,
-    //   courseSales: courseSales,
-    //   totalOrders: totalOrders,
-    // });
   } catch (error) {
     res.status(500).json({ msg: "something went wrong", error: error.message });
   }
@@ -721,8 +654,7 @@ router.get("/orders/thisMonth", async (req, res) => {
       if (item._id === "Course") result.courseSales = item.total;
     });
 
-    const totalOrders =
-      result.essentialSales + result.cakeSales + result.courseSales;
+    const totalOrders = result.essentialSales + result.cakeSales + result.courseSales;
 
     res.json({
       ...result,
@@ -784,8 +716,7 @@ router.get("/orders/overall", async (req, res) => {
       if (item._id === "Course") result.courseSales = item.total;
     });
 
-    const totalOrders =
-      result.essentialSales + result.cakeSales + result.courseSales;
+    const totalOrders = result.essentialSales + result.cakeSales + result.courseSales;
 
     res.json({
       ...result,
@@ -800,8 +731,7 @@ router.get("/orders/overall", async (req, res) => {
 router.get("/orders/:id", async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    if (!order)
-      return res.status(400).json({ msg: "can't find the specific order" });
+    if (!order) return res.status(400).json({ msg: "can't find the specific order" });
     res.json(order);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -851,12 +781,10 @@ router.get("/my-orders", authMiddleware, async (req, res) => {
     orders.forEach((o) => {
       // Just check if any product inside has the designated type to populate it correctly
       // Though, orders can have mixed products... we'll just populate all based on the types present
-      if (o.products.some((p) => p.productType === "Essential"))
-        essentialOrders.push(o);
+      if (o.products.some((p) => p.productType === "Essential")) essentialOrders.push(o);
       if (o.products.some((p) => p.productType === "Cake" || !p.productType))
         cakeOrders.push(o);
-      if (o.products.some((p) => p.productType === "Course"))
-        courseOrders.push(o);
+      if (o.products.some((p) => p.productType === "Course")) courseOrders.push(o);
     });
 
     await Promise.all([
