@@ -237,6 +237,16 @@ router.post("/orders", authMiddleware, async (req, res) => {
         );
 
         await user.save();
+
+        await Promise.all(
+          newCourses.map((course) =>
+            Course.findByIdAndUpdate(
+              course.productId,
+              { $inc: { totalStudents: 1 } },
+              { new: true },
+            ),
+          ),
+        );
       }
     }
 
