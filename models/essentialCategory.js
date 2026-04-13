@@ -8,7 +8,7 @@ const essentialCategorySchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     createdAt: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("EssentialCategory", essentialCategorySchema);
