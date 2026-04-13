@@ -9,6 +9,7 @@ import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
+import authMiddleware from "../middleware/authmiddleware.js";
 
 const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -23,6 +24,11 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+});
+
+// for user data
+router.get("/me", authMiddleware, async (req, res) => {
+  res.json({ user: req.user });
 });
 
 // for google login
