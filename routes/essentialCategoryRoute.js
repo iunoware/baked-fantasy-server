@@ -50,14 +50,14 @@ router.post(
       const essCategory = await EssentialCategory.create({
         title: req.body.title,
         subject: req.body.subject || null,
-        isActive: req.body.isActive,
+        isActive: req.body.isActive === "true",
         imageUrl: req.file ? `/uploads/${req.file.filename}` : null, // ✅ fixed field name
       });
       res.status(201).json(essCategory);
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
-  }
+  },
 );
 
 // Get all categories
@@ -100,7 +100,7 @@ router.patch("/ess-categories/:id", upload.single("image"), async (req, res) => 
       {
         new: true,
         runValidators: true,
-      }
+      },
     );
     if (!essCategory) return res.status(404).json({ error: "Category not found" });
     console.log(essCategory);

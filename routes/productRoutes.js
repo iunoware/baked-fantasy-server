@@ -71,7 +71,7 @@ router.post("/products", upload.array("images", 4), async (req, res) => {
       discountedPrice: req.body.discountedPrice,
       category: categoryBack._id,
       // isActive: req.body.isActive,
-      inStock: req.body.inStock,
+      inStock: req.body.inStock === "true",
       images: imageUrls,
     });
 
@@ -136,7 +136,7 @@ router.get("/products/category/:categoryName", async (req, res) => {
 
     const products = await Product.find({ category: category._id }).populate(
       "category",
-      "title"
+      "title",
     );
     res.json(products);
   } catch (err) {
@@ -188,7 +188,7 @@ router.patch("/products/:id/replace-image", upload.single("image"), async (req, 
     // Delete old image file if exists
     const oldImagePath = path.join(
       "uploads",
-      product.images[index].replace("/uploads/", "")
+      product.images[index].replace("/uploads/", ""),
     );
     if (fs.existsSync(oldImagePath)) {
       fs.unlinkSync(oldImagePath);
