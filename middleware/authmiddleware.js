@@ -12,15 +12,19 @@ const authMiddleware = async (req, res, next) => {
     }
 
     if (!token.startsWith("Bearer ")) {
-       console.log("⚠️ [Auth] Warning: Token is missing 'Bearer ' prefix");
+      console.log("⚠️ [Auth] Warning: Token is missing 'Bearer ' prefix");
     }
 
     const realToken = token.startsWith("Bearer ") ? token.split(" ")[1] : token;
     console.log("➡️ [Auth] Extracted realToken:", realToken);
 
     if (!realToken || realToken === "null") {
-      console.log("❌ [Auth] Failed: Token is missing (user likely not logged in)");
-      return res.status(401).json({ message: "Authentication missing. Please log in again." });
+      console.log(
+        "❌ [Auth] Failed: Token is missing (user likely not logged in)",
+      );
+      return res
+        .status(401)
+        .json({ message: "Authentication missing. Please log in again." });
     }
 
     const decoded = jwt.verify(realToken, process.env.JWT_SECRET);
@@ -38,7 +42,10 @@ const authMiddleware = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error("❌ [Auth] Failed: jwt.verify error block triggered:", error.message);
+    console.error(
+      "❌ [Auth] Failed: jwt.verify error block triggered:",
+      error.message,
+    );
     res.status(401).json({ message: "Invalid token", error: error.message });
   }
 };
