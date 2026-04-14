@@ -64,8 +64,8 @@ router.post("/bakingEssentials", upload.array("images", 4), async (req, res) => 
       originalPrice: req.body.originalPrice,
       discountedPrice: req.body.discountedPrice,
       category: category._id,
-      inStock: req.body.inStock,
-      isActive: req.body.isActive,
+      inStock: req.body.inStock === "true",
+      isActive: req.body.isActive === "true",
       images: imageUrls,
     });
 
@@ -90,7 +90,7 @@ router.get("/bakingEssentials/:id", async (req, res) => {
   try {
     const essential = await Essentials.findById(req.params.id).populate(
       "category",
-      "title"
+      "title",
     );
     if (!essential) return res.status(404).json({ error: "Product not found" });
     res.json(essential);
@@ -104,7 +104,7 @@ router.get("/essential/:id/related", async (req, res) => {
   try {
     const essential = await Essentials.findById(req.params.id).populate(
       "category",
-      "title"
+      "title",
     );
     if (!essential) {
       return res.status(404).json({ error: "Product not found" });
@@ -188,7 +188,7 @@ router.patch(
       // Delete old image file if exists
       const oldImagePath = path.join(
         "uploads",
-        product.images[index].replace("/uploads/", "")
+        product.images[index].replace("/uploads/", ""),
       );
       if (fs.existsSync(oldImagePath)) {
         fs.unlinkSync(oldImagePath);
@@ -205,7 +205,7 @@ router.patch(
       console.error("Replace image error:", err.message);
       res.status(500).json({ message: "Error replacing image", error: err.message });
     }
-  }
+  },
 );
 
 // DELETE product
