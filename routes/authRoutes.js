@@ -10,6 +10,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import authMiddleware from "../middleware/authmiddleware.js";
+import Address from "../models/address.js";
 
 const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -24,6 +25,13 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+});
+
+// to find the user has address
+router.get("/has-address", authMiddleware, async (req, res) => {
+  const count = await Address.countDocuments({ userId: req.user._id });
+  console.log("userId:", req.user._id, "address count:", count); // 👈 add this
+  res.json({ hasAddress: count > 0 });
 });
 
 // for user data
