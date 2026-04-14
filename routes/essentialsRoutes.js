@@ -65,7 +65,7 @@ router.post("/bakingEssentials", upload.array("images", 4), async (req, res) => 
       discountedPrice: req.body.discountedPrice,
       category: category._id,
       inStock: req.body.inStock === "true",
-      isActive: req.body.isActive === "true",
+      // isActive: req.body.isActive === "true",
       images: imageUrls,
     });
 
@@ -147,15 +147,25 @@ router.patch("/essentials/:id", upload.array("images", 4), async (req, res) => {
   try {
     const updateData = { ...req.body };
 
-    // If files exist, handle them
+    if (updateData.isActive !== undefined)
+      updateData.isActive = updateData.isActive === "true";
+    if (updateData.inStock !== undefined)
+      updateData.inStock = updateData.inStock === "true";
+
     if (req.files && req.files.length > 0) {
       updateData.images = req.files.map((file) => `/uploads/${file.filename}`);
     }
 
-    const essential = await Essentials.findByIdAndUpdate(req.params.id, updateData, {
-      new: true,
-      runValidators: true,
-    });
+    // const essential = await Essentials.findByIdAndUpdate(req.params.id, updateData, {
+    //   new: true,
+    //   runValidators: true,
+    //   context: "query",
+    // });
+    const essential = await Essentials.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData },
+      { new: true },
+    );
     if (!essential) return res.status(404).json({ error: "Product not found" });
     res.json(essential);
   } catch (error) {

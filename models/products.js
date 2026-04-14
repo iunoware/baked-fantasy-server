@@ -11,6 +11,7 @@ const productSchema = new mongoose.Schema(
     deliveryType: {
       type: String,
       enum: ["local", "pickup", "national"],
+      // default: "local",
       required: true,
     },
     category: {

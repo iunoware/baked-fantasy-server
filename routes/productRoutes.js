@@ -70,6 +70,7 @@ router.post("/products", upload.array("images", 4), async (req, res) => {
       originalPrice: req.body.originalPrice,
       discountedPrice: req.body.discountedPrice,
       category: categoryBack._id,
+      deliveryType: req.body.deliveryType,
       // isActive: req.body.isActive,
       inStock: req.body.inStock === "true",
       images: imageUrls,
@@ -149,15 +150,26 @@ router.patch("/products/:id", upload.array("images", 4), async (req, res) => {
   try {
     const updateData = { ...req.body };
 
+    if (updateData.isActive !== undefined)
+      updateData.isActive = updateData.isActive === "true";
+    if (updateData.inStock !== undefined)
+      updateData.inStock = updateData.inStock === "true";
+
     // If files exist, handle them
     if (req.files && req.files.length > 0) {
       updateData.images = req.files.map((file) => `/uploads/${file.filename}`);
     }
 
-    const product = await Product.findByIdAndUpdate(req.params.id, updateData, {
-      new: true,
-      runValidators: true,
-    });
+    // const product = await Product.findByIdAndUpdate(req.params.id, updateData, {
+    //   new: true,
+    //   runValidators: true,
+    //   context: "query", // fixed the unique validator for title on updates
+    // });
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      { $set: updateData },
+      { new: true },
+    );
     if (!product) return res.status(404).json({ error: "Product not found" });
     res.json(product);
   } catch (error) {
