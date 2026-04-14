@@ -3,6 +3,7 @@ import multer from "multer";
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 import Category from "../models/category.js";
+import Product from "../models/products.js";
 
 const router = express.Router();
 
@@ -31,7 +32,7 @@ const upload = multer({ storage });
 //       return res.status(403).json({ msg: "access denied" });
 //     }
 
-//     req.user = user; // ✅ attach user to req (not res)
+//     req.user = user; // attach user to req (not res)
 //     next();
 //   } catch (error) {
 //     res.status(400).json({ msg: "something went wrong", error: error.message });
@@ -43,13 +44,13 @@ const upload = multer({ storage });
 // Create category (with 1 image)
 router.post(
   "/categories",
-  upload.single("image"), // 👈 expects form-data key: image
+  upload.single("image"), // expects form-data key: image
   async (req, res) => {
     try {
       const category = await Category.create({
         title: req.body.title,
         subject: req.body.subject || null,
-        imageUrl: req.file ? `/uploads/${req.file.filename}` : null, // ✅ fixed field name
+        imageUrl: req.file ? `/uploads/${req.file.filename}` : null, // fixed field name
       });
       res.status(201).json(category);
     } catch (error) {
@@ -114,11 +115,26 @@ router.patch("/categories/:id", upload.single("image"), async (req, res) => {
 });
 
 // Delete category
+// router.delete("/categories/:id", async (req, res) => {
+//   try {
+//     const category = await Category.findByIdAndDelete(req.params.id);
+//     if (!category) return res.status(404).json({ error: "Category not found" });
+//     res.json({ msg: "Category deleted" });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+
+// new DELETE route, deletes all the products inside the category
 router.delete("/categories/:id", async (req, res) => {
   try {
     const category = await Category.findByIdAndDelete(req.params.id);
     if (!category) return res.status(404).json({ error: "Category not found" });
-    res.json({ msg: "Category deleted" });
+
+    // Delete all products belonging to this category
+    await Product.deleteMany({ category: category._id });
+
+    res.json({ msg: "Category and its products deleted" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

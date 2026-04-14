@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const equipmentSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, unique: true },
+    // title: { type: String, required: true },
     originalPrice: { type: Number, required: true },
     discountedPrice: { type: Number, required: true },
     subject: { type: String },

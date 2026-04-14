@@ -3,6 +3,7 @@ import multer from "multer";
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 import EssentialCategory from "../models/essentialCategory.js";
+import Essentials from "../models/essentials.js";
 
 const router = express.Router();
 
@@ -44,14 +45,14 @@ const upload = multer({ storage });
 router.post(
   "/ess-categories",
   // verifyAdmin,
-  upload.single("image"), // 👈 expects form-data key: image
+  upload.single("image"), // expects form-data key: image
   async (req, res) => {
     try {
       const essCategory = await EssentialCategory.create({
         title: req.body.title,
         subject: req.body.subject || null,
-        isActive: req.body.isActive === "true",
-        imageUrl: req.file ? `/uploads/${req.file.filename}` : null, // ✅ fixed field name
+        // isActive: req.body.isActive === "true",
+        imageUrl: req.file ? `/uploads/${req.file.filename}` : null, // fixed field name
       });
       res.status(201).json(essCategory);
     } catch (error) {
@@ -112,11 +113,26 @@ router.patch("/ess-categories/:id", upload.single("image"), async (req, res) => 
 });
 
 // Delete category
+// router.delete("/ess-categories/:id", async (req, res) => {
+//   try {
+//     const essCategory = await EssentialCategory.findByIdAndDelete(req.params.id);
+//     if (!essCategory) return res.status(404).json({ error: "Category not found" });
+//     res.json({ msg: "Category deleted" });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+
+// new DELETE route, deletes all the products inside the category
 router.delete("/ess-categories/:id", async (req, res) => {
   try {
     const essCategory = await EssentialCategory.findByIdAndDelete(req.params.id);
     if (!essCategory) return res.status(404).json({ error: "Category not found" });
-    res.json({ msg: "Category deleted" });
+
+    // Delete all essentials belonging to this category
+    await Essentials.deleteMany({ category: essCategory._id });
+
+    res.json({ msg: "Category and its essentials deleted" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
