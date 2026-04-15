@@ -155,6 +155,14 @@ router.patch("/products/:id", upload.array("images", 4), async (req, res) => {
     if (updateData.inStock !== undefined)
       updateData.inStock = updateData.inStock === "true";
 
+    // validate deliveryType if provided
+    if (updateData.deliveryType !== undefined) {
+      const validTypes = ["local", "pickup", "national"];
+      if (!validTypes.includes(updateData.deliveryType)) {
+        return res.status(400).json({ error: "Invalid deliveryType" });
+      }
+    }
+
     // If files exist, handle them
     if (req.files && req.files.length > 0) {
       updateData.images = req.files.map((file) => `/uploads/${file.filename}`);

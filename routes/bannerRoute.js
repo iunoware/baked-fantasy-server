@@ -53,19 +53,54 @@ router.post("/banner", upload.single("image"), async (req, res) => {
 });
 
 // edit the Banner
+// router.patch("/banner", upload.single("image"), async (req, res) => {
+//   try {
+//     const { title, subject, active } = req.body;
+
+//     const updateData = {
+//       title,
+//       subject,
+//       active,
+//       endDate: active ? new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) : null,
+//     };
+//     if (req.file) {
+//       updateData.image = `/uploads/${req.file.filename}`;
+//     }
+//     const updatedData = await Banner.findOneAndUpdate({}, updateData, {
+//       new: true,
+//       upsert: true,
+//     });
+
+//     res.status(200).json({
+//       message: "Banner Updated Successfully",
+//       banner: updatedData,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Failed to update banner" });
+//   }
+// });
 router.patch("/banner", upload.single("image"), async (req, res) => {
   try {
-    const { title, subject, active } = req.body;
+    const { title, subject, active, endDate } = req.body;
 
-    const updateData = {
-      title,
-      subject,
-      active,
-      endDate: active ? new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) : null,
-    };
+    // const updateData = { title, subject, active };
+    const updateData = {};
+    if (title) updateData.title = title;
+    if (subject) updateData.subject = subject;
+    if (endDate) updateData.endDate = new Date(endDate);
+
+    // always parse active as a proper boolean
+    updateData.active = active === "true" || active === true;
+
+    if (endDate) {
+      updateData.endDate = new Date(endDate);
+    }
+
     if (req.file) {
       updateData.image = `/uploads/${req.file.filename}`;
     }
+
     const updatedData = await Banner.findOneAndUpdate({}, updateData, {
       new: true,
       upsert: true,
@@ -90,6 +125,7 @@ router.get("/banner", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 // get active banner
 router.get("/banner/active", async (req, res) => {
   try {
