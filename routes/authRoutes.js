@@ -87,8 +87,15 @@ router.post("/google-login", async (req, res) => {
     const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
-
+    // old method
     res.json({ msg: "Google Login Success", token: jwtToken, user });
+    // new method for storing token in cookie for security reasons.
+    // res.json({ msg: "Google Login Success", user }).cookie("token", token, {
+    //   httpOnly: true,
+    //   secure: true,
+    //   sameSite: "Strict",
+    //   maxAge: 7 * 24 * 60 * 60 * 1000,
+    // });
   } catch (err) {
     console.error("GOOGLE LOGIN ERROR DETAILS:", err);
     res.status(500).json({
