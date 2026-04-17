@@ -45,9 +45,21 @@ const upload = multer({
 });
 
 // authentication
+// function authenticateToken(req, res, next) {
+//   const authHeader = req.headers["authorization"];
+//   const token = authHeader?.split(" ")[1]; // "Bearer <token>"
+
+//   if (!token) return res.status(401).json({ msg: "No token" });
+
+//   try {
+//     req.user = jwt.verify(token, process.env.JWT_SECRET);
+//     next();
+//   } catch {
+//     return res.status(403).json({ msg: "Invalid token" });
+//   }
+// }
 function authenticateToken(req, res, next) {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader?.split(" ")[1]; // "Bearer <token>"
+  const token = req.cookies?.authToken || req.headers["authorization"]?.split(" ")[1];
 
   if (!token) return res.status(401).json({ msg: "No token" });
 
@@ -283,11 +295,101 @@ router.post("/course/:courseId/review", authenticateToken, async (req, res) => {
 //   }
 // });
 
+// old code - video pauses after 3 seconds
+// router.get("/video/:filename", authenticateToken, async (req, res) => {
+//   try {
+//     const { filename } = req.params;
+
+//     // Prevent path traversal
+//     const filePath = path.resolve(process.cwd(), "uploads", path.basename(filename));
+
+//     if (!filePath.startsWith(path.join(process.cwd(), "uploads"))) {
+//       return res.status(403).json({ msg: "Forbidden" });
+//     }
+
+//     if (!fs.existsSync(filePath)) {
+//       return res.status(404).json({ msg: "File not found" });
+//     }
+
+//     // Disable caching so the URL can't be reused
+//     res.setHeader("Cache-Control", "no-store");
+//     res.setHeader("Content-Disposition", "inline");
+
+//     const stat = fs.statSync(filePath);
+//     res.writeHead(200, {
+//       "Content-Length": stat.size,
+//       "Content-Type": "video/mp4",
+//     });
+
+//     fs.createReadStream(filePath).pipe(res);
+//   } catch (err) {
+//     res.status(500).json({ msg: err.message });
+//   }
+// });
+
+// new code
+// router.get("/video/:filename", authenticateToken, async (req, res) => {
+//   try {
+//     const { filename } = req.params;
+
+//     const filePath = path.resolve(process.cwd(), "uploads", path.basename(filename));
+
+//     if (!filePath.startsWith(path.join(process.cwd(), "uploads"))) {
+//       return res.status(403).json({ msg: "Forbidden" });
+//     }
+
+//     if (!fs.existsSync(filePath)) {
+//       return res.status(404).json({ msg: "File not found" });
+//     }
+
+//     const stat = fs.statSync(filePath);
+//     const fileSize = stat.size;
+//     const range = req.headers.range;
+
+//     res.setHeader("Cache-Control", "no-store");
+//     res.setHeader("Content-Disposition", "inline");
+
+//     if (range) {
+//       // Parse Range header: "bytes=start-end"
+//       const parts = range.replace(/bytes=/, "").split("-");
+//       const start = parseInt(parts[0], 10);
+//       const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+//       if (start >= fileSize || end >= fileSize) {
+//         res.status(416).setHeader("Content-Range", `bytes */${fileSize}`);
+//         return res.end();
+//       }
+
+//       const chunkSize = end - start + 1;
+//       const fileStream = fs.createReadStream(filePath, { start, end });
+
+//       res.writeHead(206, {
+//         "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+//         "Accept-Ranges": "bytes",
+//         "Content-Length": chunkSize,
+//         "Content-Type": "video/mp4",
+//       });
+
+//       fileStream.pipe(res);
+//     } else {
+//       // No range header — send full file
+//       res.writeHead(200, {
+//         "Content-Length": fileSize,
+//         "Accept-Ranges": "bytes",
+//         "Content-Type": "video/mp4",
+//       });
+
+//       fs.createReadStream(filePath).pipe(res);
+//     }
+//   } catch (err) {
+//     res.status(500).json({ msg: err.message });
+//   }
+// });
+
+// new code 2
 router.get("/video/:filename", authenticateToken, async (req, res) => {
   try {
     const { filename } = req.params;
-
-    // Prevent path traversal
     const filePath = path.resolve(process.cwd(), "uploads", path.basename(filename));
 
     if (!filePath.startsWith(path.join(process.cwd(), "uploads"))) {
@@ -298,17 +400,46 @@ router.get("/video/:filename", authenticateToken, async (req, res) => {
       return res.status(404).json({ msg: "File not found" });
     }
 
-    // Disable caching so the URL can't be reused
-    res.setHeader("Cache-Control", "no-store");
-    res.setHeader("Content-Disposition", "inline");
-
     const stat = fs.statSync(filePath);
-    res.writeHead(200, {
-      "Content-Length": stat.size,
-      "Content-Type": "video/mp4",
-    });
+    const fileSize = stat.size;
+    const range = req.headers.range;
 
-    fs.createReadStream(filePath).pipe(res);
+    // Prevent caching and force re-auth on new requests
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+    res.setHeader("Content-Disposition", "inline");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
+    if (range) {
+      const parts = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+      if (start >= fileSize || end >= fileSize) {
+        res.status(416).setHeader("Content-Range", `bytes */${fileSize}`);
+        return res.end();
+      }
+
+      const chunkSize = end - start + 1;
+      const fileStream = fs.createReadStream(filePath, { start, end });
+
+      res.writeHead(206, {
+        "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+        "Accept-Ranges": "bytes",
+        "Content-Length": chunkSize,
+        "Content-Type": "video/mp4",
+      });
+
+      fileStream.pipe(res);
+    } else {
+      res.writeHead(200, {
+        "Content-Length": fileSize,
+        "Accept-Ranges": "bytes",
+        "Content-Type": "video/mp4",
+      });
+
+      fs.createReadStream(filePath).pipe(res);
+    }
   } catch (err) {
     res.status(500).json({ msg: err.message });
   }
