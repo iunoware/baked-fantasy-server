@@ -42,7 +42,7 @@ router.post("/banner", upload.single("image"), async (req, res) => {
     const banner = await Banner.create({
       title: req.body.title,
       subject: req.body.subject,
-      image: req.file ? `/uploads/${req.file.filename}` : null, // ✅ fixed field name
+      image: req.file ? `/uploads/${req.file.filename}` : null, // fixed field name
       active: req.body.active,
       endDate: req.body.endDate,
     });
