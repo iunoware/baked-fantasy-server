@@ -8,6 +8,8 @@ import cors from "cors";
 import jwt from "jsonwebtoken";
 import User from "./models/user.js";
 import path from "path";
+import cookieParser from "cookie-parser";
+
 // import { fileURLToPath } from "url";
 
 // const __filename = fileURLToPath(import.meta.url);
@@ -36,20 +38,37 @@ import adminRoute from "./routes/adminRoute.js";
 import searchRoute from "./routes/searchRoute.js";
 import distanceRoute from "./routes/distanceRoute.js";
 import addressRoute from "./routes/addressRoute.js";
+// import promoCode from "./models/promoCode.js";
 
 dotenv.config();
 const PORT = process.env.PORT || 5000;
 
 const app = express();
+
+// CORS configuration - IMPORTANT!
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:3000"],
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    credentials: true,
+    origin: ["http://localhost:5173", "http://127.0.0.1:5173"], // Your frontend URL
+    credentials: true, // Allow cookies to be sent
   }),
 );
+
+// Security Headers for Google Auth & Cross-Origin Popups
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  next();
+});
+
+// app.use(
+//   cors({
+//     origin: ["http://localhost:5173", "http://localhost:3000"],
+//     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+//     credentials: true,
+//   }),
+// );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 connectDB();
 
@@ -70,13 +89,15 @@ app.use("/", cartRoutes);
 app.use("/", searchRoute);
 app.use("/", distanceRoute);
 app.use("/", addressRoute);
+// app.use("/", promoCode);
 
 app.use("/uploads", express.static("uploads"));
 // app.use("/", userVerification);
 
 async function verifyUser(req, res, next) {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
+    const token =
+      req.cookies.authToken || req.headers.authorization?.split(" ")[1];
     if (!token) return res.status(401).json({ msg: "Unauthorized" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -87,11 +108,11 @@ async function verifyUser(req, res, next) {
     req.user = user;
     next();
   } catch (error) {
-    res.status(400).json({ msg: "Invalid token", error: error.message });
+    res.status(401).json({ msg: "Invalid token", error: error.message });
   }
 }
 
-// Removed redundant protected uploads route to allow public access and consistent fallbacks
+// Removed rexdundant protected uploads route to allow public access and consistent fallbacks
 /*
 app.get("/uploads/:fileName", verifyUser, (req, res) => {
   const fileName = req.params.fileName;
