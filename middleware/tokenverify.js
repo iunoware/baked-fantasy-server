@@ -1,19 +1,19 @@
 import jwt from "jsonwebtoken";
 
 const verifyAdmin = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(404).json({ msg: "No Token Provided" });
-  }
+  // Try to get token from cookie first, then fall back to header
+  const token = req.cookies.authToken || req.headers.authorization?.split(" ")[1];
 
-  const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ msg: "No Token Provided" });
+  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.admin = decoded;
     next();
   } catch (error) {
-    res.status(404).json({ msg: "invalid or expired token" });
+    res.status(401).json({ msg: "invalid or expired token" });
   }
 };
 

@@ -161,9 +161,16 @@ router.post("/admin/login", async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRE },
     );
 
+    // Set httpOnly cookie for admin
+    // res.cookie("authToken", token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production",
+    //   sameSite: "lax",
+    //   maxAge: 24 * 60 * 60 * 1000, // 1 day
+    // });
+
     res.status(200).json({
       msg: "Login successful",
-      token,
       admin: {
         name: admin.name,
         isMaster: admin.isMaster,

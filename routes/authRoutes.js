@@ -53,8 +53,6 @@ router.post("/google-login", async (req, res) => {
       audience: process.env.GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
-    console.log("Google Auth Payload:", payload); // Debugging log
-
     const { email, name, picture, sub } = payload;
 
     if (!email) {
@@ -66,18 +64,14 @@ router.post("/google-login", async (req, res) => {
     let user = await User.findOne({ email });
 
     if (!user) {
-      console.log("Creating new Google user:", email);
       user = await User.create({
         name: name || email.split("@")[0],
         email: email,
-        password: null, // No password for Google users
+        password: null,
         provider: "google",
         role: "user",
-        // You could also store picture or sub if needed
       });
     } else {
-      console.log("Existing Google user logged in:", email);
-      // Optional: Update provider if user existed as local but logged in with Google
       if (user.provider !== "google") {
         user.provider = "google";
         await user.save();
@@ -87,21 +81,22 @@ router.post("/google-login", async (req, res) => {
     const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
     });
-    // old method
-    res.json({ msg: "Google Login Success", token: jwtToken, user });
-    // new method for storing token in cookie for security reasons.
-    // res.json({ msg: "Google Login Success", user }).cookie("token", token, {
-    //   httpOnly: true,
-    //   secure: true,
-    //   sameSite: "Strict",
-    //   maxAge: 7 * 24 * 60 * 60 * 1000,
-    // });
+
+    // Set httpOnly cookie instead of sending token in response
+    res.cookie("authToken", jwtToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    // Return user data without token
+    res.json({ msg: "Google Login Success", user });
   } catch (err) {
     console.error("GOOGLE LOGIN ERROR DETAILS:", err);
     res.status(500).json({
       error: "Google Login Failed",
       details: err.message,
-      stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
     });
   }
 });
@@ -129,7 +124,16 @@ router.post("/register", async (req, res) => {
       expiresIn: "1d",
     });
 
-    res.json({ msg: "User registered successfully", user, token });
+    // Set httpOnly cookie
+    res.cookie("authToken", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    // Return user data without token
+    res.json({ msg: "User registered successfully", user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -150,13 +154,22 @@ router.post("/login", async (req, res) => {
       expiresIn: "1d",
     });
 
-    res.json({ msg: "Login success", token, user });
+    // Set httpOnly cookie
+    res.cookie("authToken", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    // Return user data without token
+    res.json({ msg: "Login success", user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// for modifing user details
+// for modifying user details
 router.patch("/update-profile", async (req, res) => {
   try {
     const { name, email, mobileNumber, address } = req.body;
@@ -173,6 +186,21 @@ router.patch("/update-profile", async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// Add a LOGOUT route (NEW)
+router.post("/logout", (req, res) => {
+  res.clearCookie("authToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  });
+  res.clearCookie("isAdmin", {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  });
+  res.json({ msg: "Logged out successfully" });
 });
 
 router.post("/send-otp", async (req, res) => {
