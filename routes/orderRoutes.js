@@ -58,7 +58,7 @@ axios.get("/orders", {
 // middleware for orders
 const authMiddleware = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
+    const token = req.cookies.authToken; // ← change this
     if (!token) return res.status(400).json({ msg: "No token provided" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -217,12 +217,16 @@ router.post("/orders", authMiddleware, async (req, res) => {
       totalPrice,
     });
 
-    const courseProducts = normalizedProducts.filter((p) => p.productType === "Course");
+    const courseProducts = normalizedProducts.filter(
+      (p) => p.productType === "Course",
+    );
 
     if (courseProducts.length > 0) {
       const user = await User.findById(req.user._id);
 
-      const existingCourseIds = user.purchasedCourses.map((c) => c.courseId.toString());
+      const existingCourseIds = user.purchasedCourses.map((c) =>
+        c.courseId.toString(),
+      );
 
       const newCourses = courseProducts.filter(
         (c) => !existingCourseIds.includes(c.productId.toString()),
@@ -509,7 +513,8 @@ router.get("/orders/today", async (req, res) => {
       if (item._id === "Course") result.courseSales = item.total;
     });
 
-    const totalOrders = result.essentialSales + result.cakeSales + result.courseSales;
+    const totalOrders =
+      result.essentialSales + result.cakeSales + result.courseSales;
 
     res.status(200).json({
       ...result,
@@ -585,7 +590,8 @@ router.get("/orders/thisWeek", async (req, res) => {
       if (item._id === "Course") result.courseSales = item.total;
     });
 
-    const totalOrders = result.essentialSales + result.cakeSales + result.courseSales;
+    const totalOrders =
+      result.essentialSales + result.cakeSales + result.courseSales;
 
     res.json({
       ...result,
@@ -664,7 +670,8 @@ router.get("/orders/thisMonth", async (req, res) => {
       if (item._id === "Course") result.courseSales = item.total;
     });
 
-    const totalOrders = result.essentialSales + result.cakeSales + result.courseSales;
+    const totalOrders =
+      result.essentialSales + result.cakeSales + result.courseSales;
 
     res.json({
       ...result,
@@ -726,7 +733,8 @@ router.get("/orders/overall", async (req, res) => {
       if (item._id === "Course") result.courseSales = item.total;
     });
 
-    const totalOrders = result.essentialSales + result.cakeSales + result.courseSales;
+    const totalOrders =
+      result.essentialSales + result.cakeSales + result.courseSales;
 
     res.json({
       ...result,
@@ -741,7 +749,8 @@ router.get("/orders/overall", async (req, res) => {
 router.get("/orders/:id", async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    if (!order) return res.status(400).json({ msg: "can't find the specific order" });
+    if (!order)
+      return res.status(400).json({ msg: "can't find the specific order" });
     res.json(order);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -791,10 +800,12 @@ router.get("/my-orders", authMiddleware, async (req, res) => {
     orders.forEach((o) => {
       // Just check if any product inside has the designated type to populate it correctly
       // Though, orders can have mixed products... we'll just populate all based on the types present
-      if (o.products.some((p) => p.productType === "Essential")) essentialOrders.push(o);
+      if (o.products.some((p) => p.productType === "Essential"))
+        essentialOrders.push(o);
       if (o.products.some((p) => p.productType === "Cake" || !p.productType))
         cakeOrders.push(o);
-      if (o.products.some((p) => p.productType === "Course")) courseOrders.push(o);
+      if (o.products.some((p) => p.productType === "Course"))
+        courseOrders.push(o);
     });
 
     await Promise.all([

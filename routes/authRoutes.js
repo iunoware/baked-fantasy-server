@@ -85,9 +85,11 @@ router.post("/google-login", async (req, res) => {
     // Set httpOnly cookie instead of sending token in response
     res.cookie("authToken", jwtToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      // secure: process.env.NODE_ENV === "production",
+      secure: false,
+      sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000, // 1 day
+      path: "/",
     });
 
     // Return user data without token
@@ -127,9 +129,12 @@ router.post("/register", async (req, res) => {
     // Set httpOnly cookie
     res.cookie("authToken", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      // secure: process.env.NODE_ENV === "production",
+      secure: false,
+      // sameSite: "strict",
+      sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000, // 1 day
+      path: "/",
     });
 
     // Return user data without token
@@ -157,9 +162,12 @@ router.post("/login", async (req, res) => {
     // Set httpOnly cookie
     res.cookie("authToken", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      // secure: process.env.NODE_ENV === "production",
+      secure: false,
+      // sameSite: "strict",
       sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000, // 1 day
+      path: "/",
     });
 
     // Return user data without token
