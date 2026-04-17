@@ -50,6 +50,8 @@ app.use(
   cors({
     origin: ["http://localhost:5173", "http://127.0.0.1:5173"], // Your frontend URL
     credentials: true, // Allow cookies to be sent
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
@@ -66,9 +68,9 @@ app.use((req, res, next) => {
 //     credentials: true,
 //   }),
 // );
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 
 connectDB();
 
