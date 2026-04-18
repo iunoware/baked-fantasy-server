@@ -217,16 +217,12 @@ router.post("/orders", authMiddleware, async (req, res) => {
       totalPrice,
     });
 
-    const courseProducts = normalizedProducts.filter(
-      (p) => p.productType === "Course",
-    );
+    const courseProducts = normalizedProducts.filter((p) => p.productType === "Course");
 
     if (courseProducts.length > 0) {
       const user = await User.findById(req.user._id);
 
-      const existingCourseIds = user.purchasedCourses.map((c) =>
-        c.courseId.toString(),
-      );
+      const existingCourseIds = user.purchasedCourses.map((c) => c.courseId.toString());
 
       const newCourses = courseProducts.filter(
         (c) => !existingCourseIds.includes(c.productId.toString()),
@@ -513,8 +509,7 @@ router.get("/orders/today", async (req, res) => {
       if (item._id === "Course") result.courseSales = item.total;
     });
 
-    const totalOrders =
-      result.essentialSales + result.cakeSales + result.courseSales;
+    const totalOrders = result.essentialSales + result.cakeSales + result.courseSales;
 
     res.status(200).json({
       ...result,
@@ -590,8 +585,7 @@ router.get("/orders/thisWeek", async (req, res) => {
       if (item._id === "Course") result.courseSales = item.total;
     });
 
-    const totalOrders =
-      result.essentialSales + result.cakeSales + result.courseSales;
+    const totalOrders = result.essentialSales + result.cakeSales + result.courseSales;
 
     res.json({
       ...result,
@@ -670,8 +664,7 @@ router.get("/orders/thisMonth", async (req, res) => {
       if (item._id === "Course") result.courseSales = item.total;
     });
 
-    const totalOrders =
-      result.essentialSales + result.cakeSales + result.courseSales;
+    const totalOrders = result.essentialSales + result.cakeSales + result.courseSales;
 
     res.json({
       ...result,
@@ -733,8 +726,7 @@ router.get("/orders/overall", async (req, res) => {
       if (item._id === "Course") result.courseSales = item.total;
     });
 
-    const totalOrders =
-      result.essentialSales + result.cakeSales + result.courseSales;
+    const totalOrders = result.essentialSales + result.cakeSales + result.courseSales;
 
     res.json({
       ...result,
@@ -745,12 +737,60 @@ router.get("/orders/overall", async (req, res) => {
   }
 });
 
+// custom date range filter
+router.get("/orders/dateRange", async (req, res) => {
+  try {
+    const { from, to } = req.query;
+
+    if (!from || !to) {
+      return res.status(400).json({ msg: "from and to dates are required" });
+    }
+
+    const start = new Date(from);
+    start.setUTCHours(0, 0, 0, 0);
+
+    const end = new Date(to);
+    end.setUTCHours(23, 59, 59, 999);
+
+    const [sales, revenueResult] = await Promise.all([
+      Order.aggregate([
+        { $match: { createdAt: { $gte: start, $lte: end } } },
+        { $unwind: "$products" },
+        {
+          $group: {
+            _id: "$products.productType",
+            total: { $sum: "$products.quantity" },
+          },
+        },
+      ]),
+      Order.aggregate([
+        { $match: { createdAt: { $gte: start, $lte: end } } },
+        { $group: { _id: null, totalRevenue: { $sum: "$totalPrice" } } },
+      ]),
+    ]);
+
+    const result = { essentialSales: 0, cakeSales: 0, courseSales: 0 };
+    sales.forEach((item) => {
+      if (item._id === "Essential") result.essentialSales = item.total;
+      if (item._id === "Cake") result.cakeSales = item.total;
+      if (item._id === "Course") result.courseSales = item.total;
+    });
+
+    res.json({
+      ...result,
+      totalOrders: result.essentialSales + result.cakeSales + result.courseSales,
+      revenue: revenueResult[0]?.totalRevenue || 0,
+    });
+  } catch (error) {
+    res.status(500).json({ msg: "Something went wrong", error: error.message });
+  }
+});
+
 // to GET specific order
 router.get("/orders/:id", async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
-    if (!order)
-      return res.status(400).json({ msg: "can't find the specific order" });
+    if (!order) return res.status(400).json({ msg: "can't find the specific order" });
     res.json(order);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -800,12 +840,10 @@ router.get("/my-orders", authMiddleware, async (req, res) => {
     orders.forEach((o) => {
       // Just check if any product inside has the designated type to populate it correctly
       // Though, orders can have mixed products... we'll just populate all based on the types present
-      if (o.products.some((p) => p.productType === "Essential"))
-        essentialOrders.push(o);
+      if (o.products.some((p) => p.productType === "Essential")) essentialOrders.push(o);
       if (o.products.some((p) => p.productType === "Cake" || !p.productType))
         cakeOrders.push(o);
-      if (o.products.some((p) => p.productType === "Course"))
-        courseOrders.push(o);
+      if (o.products.some((p) => p.productType === "Course")) courseOrders.push(o);
     });
 
     await Promise.all([
