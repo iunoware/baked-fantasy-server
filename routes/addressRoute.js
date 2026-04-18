@@ -4,6 +4,16 @@ import Address from "../models/address.js";
 
 const router = express.Router();
 
+// address to fetch from admin panel without admin panel
+router.get("/admin/address", async (req, res) => {
+  try {
+    const address = await Address.find();
+    res.json(address);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.post("/address", authMiddleware, async (req, res) => {
   try {
     const { label, fullAddress, landmark, building, lat, lng, isDefault } =
@@ -56,11 +66,11 @@ router.put("/address/:id", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { label, fullAddress, landmark, building, lat, lng } = req.body;
-    
+
     const address = await Address.findOneAndUpdate(
       { _id: id, userId: req.user._id },
       { $set: { label, fullAddress, landmark, building, lat, lng } },
-      { new: true }
+      { new: true },
     );
 
     if (!address) {
