@@ -37,20 +37,25 @@ async function verifyAdmin(req, res, next) {
 }
 
 // create Banner
-router.post("/banner", upload.single("image"), async (req, res) => {
-  try {
-    const banner = await Banner.create({
-      title: req.body.title,
-      subject: req.body.subject,
-      image: req.file ? `/uploads/${req.file.filename}` : null, // fixed field name
-      active: req.body.active,
-      endDate: req.body.endDate,
-    });
-    res.status(201).json(banner);
-  } catch (error) {
-    res.status(404).json({ error: error.message });
-  }
-});
+router.post(
+  "/banner",
+  verifyAdmin,
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const banner = await Banner.create({
+        title: req.body.title,
+        subject: req.body.subject,
+        image: req.file ? `/uploads/${req.file.filename}` : null, // fixed field name
+        active: req.body.active,
+        endDate: req.body.endDate,
+      });
+      res.status(201).json(banner);
+    } catch (error) {
+      res.status(404).json({ error: error.message });
+    }
+  },
+);
 
 // edit the Banner
 // router.patch("/banner", upload.single("image"), async (req, res) => {

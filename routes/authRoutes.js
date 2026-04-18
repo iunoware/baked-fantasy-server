@@ -27,6 +27,27 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// to get all users
+router.get("/users", async (req, res) => {
+  try {
+    const users = await User.find()
+      .select("-password")
+      .populate("addresses")
+      .populate("orders")
+      .populate("purchasedCourses.courseId")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      msg: "Users fetched successfully",
+      count: users.length,
+      users,
+    });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // to find the user has address
 router.get("/has-address", authMiddleware, async (req, res) => {
   const count = await Address.countDocuments({ userId: req.user._id });
@@ -34,7 +55,7 @@ router.get("/has-address", authMiddleware, async (req, res) => {
   res.json({ hasAddress: count > 0 });
 });
 
-// for user data
+// for single user data
 router.get("/me", authMiddleware, async (req, res) => {
   res.json({ user: req.user });
 });
