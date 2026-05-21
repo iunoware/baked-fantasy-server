@@ -38,12 +38,16 @@ import adminRoute from "./routes/adminRoute.js";
 import searchRoute from "./routes/searchRoute.js";
 import distanceRoute from "./routes/distanceRoute.js";
 import addressRoute from "./routes/addressRoute.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 // import promoCode from "./models/promoCode.js";
 
 dotenv.config();
 const PORT = process.env.PORT || 5000;
 
 const app = express();
+
+console.log(process.env.RAZORPAY_KEY_ID);
+console.log(process.env.RAZORPAY_KEY_SECRET);
 
 // CORS configuration - IMPORTANT!
 app.use(
@@ -91,6 +95,7 @@ app.use("/", cartRoutes);
 app.use("/", searchRoute);
 app.use("/", distanceRoute);
 app.use("/", addressRoute);
+app.use("/api", paymentRoutes);
 // app.use("/", promoCode);
 
 app.use("/uploads", express.static("uploads"));
