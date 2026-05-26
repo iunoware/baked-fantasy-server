@@ -49,6 +49,24 @@ const orderSchema = new mongoose.Schema(
 
     billingAddress: String,
 
+    razorpayOrderId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
+    razorpayPaymentId: {
+      type: String,
+      sparse: true,
+    },
+    razorpaySignature: {
+      type: String,
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["card", "upi", "wallet", "cod"],
+    },
+
     paymentStatus: {
       type: String,
       enum: ["pending", "paid", "failed"],
@@ -58,6 +76,7 @@ const orderSchema = new mongoose.Schema(
     orderStatus: {
       type: String,
       enum: [
+        "pending",
         "confirmed",
         "preparing",
         "packed",
