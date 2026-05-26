@@ -46,13 +46,30 @@ const PORT = process.env.PORT || 5000;
 
 const app = express();
 
-console.log(process.env.RAZORPAY_KEY_ID);
-console.log(process.env.RAZORPAY_KEY_SECRET);
+// console.log(process.env.RAZORPAY_KEY_ID);
+// console.log(process.env.RAZORPAY_KEY_SECRET);
 
 // CORS configuration - IMPORTANT!
+const allowedOrigins = [
+  "http://localhost:5173", // Local development
+  "http://127.0.0.1:5173", // Local alternative
+  "https://backed-fantasy.netlify.app/",
+  // Add custom domain if you have one:
+  // "https://www.yourdomain.com",
+];
+
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://127.0.0.1:5173"], // Your frontend URL
+    // origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true, // Allow cookies to be sent
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -139,6 +156,28 @@ app.use((err, req, res, next) => {
   console.error("Server Error:", err);
   res.status(500).json({ message: "Internal server error" });
 });
+
+// Environment check - before starting server
+console.log("=== Environment Configuration ===");
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("PORT:", PORT);
+console.log(
+  "MongoDB URI:",
+  process.env.MONGODB_URI ? "✅ Configured" : "❌ Missing",
+);
+console.log(
+  "Razorpay Key ID:",
+  process.env.RAZORPAY_KEY_ID ? "✅ Configured" : "❌ Missing",
+);
+console.log(
+  "Razorpay Secret:",
+  process.env.RAZORPAY_KEY_SECRET ? "✅ Configured" : "❌ Missing",
+);
+console.log(
+  "JWT Secret:",
+  process.env.JWT_SECRET ? "✅ Configured" : "❌ Missing",
+);
+console.log("=====================================");
 
 app.listen(PORT, () => {
   console.log(`server is running at ${PORT}`);
