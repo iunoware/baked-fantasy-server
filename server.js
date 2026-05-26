@@ -53,7 +53,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173", // Local development
   "http://127.0.0.1:5173", // Local alternative
-  "https://backed-fantasy.netlify.app/",
+  "https://backed-fantasy.netlify.app",
   // Add custom domain if you have one:
   // "https://www.yourdomain.com",
 ];
